@@ -33,7 +33,7 @@ sudo pacman -S zsh lua fd
 
 in Debian:
 ```
-sudo apt install zsh lua5.4 fd-find     lua 版本请自行选择
+sudo apt install zsh lua5.4 fd-find     # lua 版本请自行选择
 ```
 
 - fzf
