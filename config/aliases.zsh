@@ -8,10 +8,6 @@ alias vim=nvim
 alias vi=nvim
 alias lg=lazygit
 alias rr=ranger
-alias sudo='sudo -E'
-alias ssh="kitty +kitten ssh"
-
-# eval $(thefuck --alias)
 
 # git alias
 alias gco='git checkout'
@@ -24,3 +20,6 @@ alias gpt='git push origin --tags'
 alias glt='git tag -n --sort=taggerdate | tail -n ${1-10}'
 
 alias waybar="bash ~/.script/waybar-restart.sh &"
+
+alias setproxy="export ALL_PROXY=socks5://127.0.0.1:7890"
+alias unsetproxy="unset ALL_PROXY"
