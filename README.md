@@ -1,7 +1,7 @@
 ## 目录结构
 ```
 ./
-├── cache/                              
+├── cache/
 ├── config/
 │   ├── aliases.zsh
 │   ├── env.zsh
@@ -16,6 +16,7 @@
 ├── plugins/
 │   ├── extract/
 │   ├── fzf-tab/
+│   ├── randport/
 │   ├── z.lua/
 │   ├── zsh-autosuggestions/
 │   └── zsh-syntax-highlighting/
@@ -23,17 +24,38 @@
 │   └── simple.zsh-theme
 └── omz.zsh
 ```
+## Installation
 
-## Requires
-- `Zsh`,`lua`,`fd` in Arch Linux:
+### 自动安装
+理论上可以支持大多数发行版，请自行测试，**运行前务必备份！**
+```
+curl -fsSL https://gist.github.com/SinclairLin/44f875848194b5503b5926c50e37840f/raw/993d186fd1c11903fd5abb368579fce13bb8b96a/install_zsh_config.sh -o install_zsh_config.sh
+chmod +x install_zsh_config.sh
+./install_zsh_config.sh
+```
+
+### 手动安装
+#### Requires
+- `Zsh`,`lua`,`fd`
+in Arch Linux:
 ```
 sudo pacman -S zsh lua fd
-
 ```
 
 in Debian:
 ```
-sudo apt install zsh lua5.4 fd-find     # lua 版本请自行选择
+sudo apt install zsh lua5.4 fd-find 
+```
+
+in OpenWrt:
+```
+opkg install zsh
+sed -i 's|:/bin/ash|:/usr/bin/zsh|g' /etc/passwd    # 更换默认shell
+wget https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz
+tar -zxvf fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz
+mv fd-v10.3.0-aarch64-unknown-linux-musl/fd /usr/bin
+chmod +x /usr/bin/fd
+fd --version
 ```
 
 - fzf
@@ -42,12 +64,11 @@ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
 ```
 
-## Installation
-clone 我的配置，复制到你的`~/.config`文件夹中：
+#### source
+clone 我的配置到`~/.config`：
 ```
-git clone https://github.com/SinclairLin/omz
-cp -r ./omz ~/.config/zsh/
-echo "source ~/.config/zsh/omz.zsh" >> ~/.zshrc
+git clone https://github.com/SinclairLin/omz ~/.config/zsh && \
+echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
 ```
 
 ## Plugins
@@ -58,6 +79,9 @@ echo "source ~/.config/zsh/omz.zsh" >> ~/.zshrc
 > 这样就可以不必知道解压文件的具体命令，该函数会建立一个新的文件夹，然后将文件提取到新的文件夹中。
 > 具体可以解压那些文件：[SinclairLin/zsh-extract](https://github.com/SinclairLin/zsh-extract/blob/master/README.md#supported-file-extensions)。
 
+- [zsh-randport](https://github.com/SinclairLin/zsh-randport)
+
+> 定义一个`randport`函数，使其可以在49152 - 65535之间随机挑选一个空闲端口打印到屏幕上。
 
 - [z.lua](https://github.com/skywind3000/z.lua)
 
