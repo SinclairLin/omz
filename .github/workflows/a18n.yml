@@ -31,18 +31,13 @@ jobs:
       - name: Install dependencies
         run: pip install --upgrade openai
 
-      - name: Translate README.md to English
+      - name: Translate README.zh-CN.md to README.md (English)
         env:
           CHATGPT_API_KEY: ${{ secrets.CHATGPT_API_KEY }}
           CHATGPT_API_BASE: ${{ secrets.CHATGPT_API_BASE }}
-<<<<<<< HEAD
-          I18N_TARGET_LANG: zh-CN
-          TRANSLATE_TARGET_LANG: zh-CN
-=======
           I18N_TARGET_LANG: en
           TRANSLATE_TARGET_LANG: en
           I18N_MODEL: ${{ vars.I18N_MODEL }}
->>>>>>> origin/main
         run: |
           python - <<'PY'
           import os
@@ -57,7 +52,7 @@ jobs:
 
           client = OpenAI(api_key=api_key, base_url=base_url or None)
 
-          with open("README.md", "r", encoding="utf-8") as f:
+          with open("README.zh-CN.md", "r", encoding="utf-8") as f:
               source = f.read()
 
           prompt = (
@@ -77,14 +72,14 @@ jobs:
           )
 
           text = (resp.choices[0].message.content or "").strip() + "\n"
-          with open("README_EN.md", "w", encoding="utf-8") as f:
+          with open("README.md", "w", encoding="utf-8") as f:
               f.write(text)
           PY
 
       - name: Commit and push translated README
         run: |
           if git diff --quiet -- README.md; then
-            echo "README.md is up to date, nothing to commit."
+            echo "README.md is up to date after translating README.zh-CN.md, nothing to commit."
             exit 0
           fi
 
