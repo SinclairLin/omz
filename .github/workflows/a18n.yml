@@ -31,19 +31,22 @@ jobs:
           CHATGPT_API_BASE: ${{ secrets.CHATGPT_API_BASE }}
           I18N_TARGET_LANG: en
           TRANSLATE_TARGET_LANG: en
+          I18N_MODEL: ${{ vars.I18N_MODEL }}
         run: |
           pip install -r requirements.txt
           python auto-translater.py || true
       - name: Commit translated
         run: |
-          git config --global user.email ${{ secrets.GIT_EMAIL }}
-          git config --global user.name ${{ github.actor }}
-          git add .
-          git commit -m "Commit translated" || true
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          if git diff --quiet -- README.md; then
+            echo "README.md is up to date, nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore(i18n): auto-translate README to English [skip ci]"
+          git push origin HEAD:main
       - name: Install MkDocs dependencies
         run: pip install -r requirements.txt
       - name: Deploy with MkDocs
