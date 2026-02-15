@@ -1,4 +1,4 @@
-[English](./README.md) | Chinese
+English | [中文](./README.zh-CN.md)
 
 ## Directory Structure
 ```text
@@ -93,9 +93,9 @@ git clone https://github.com/SinclairLin/omz ~/.config/zsh && echo 'source ~/.co
 
 - [zsh-extract](https://github.com/SinclairLin/zsh-extract)
 
-> Defines an `extract` function. Simply execute `extract <filename>` or `x <filename>` to decompress an archive file.
-> This way, you don't need to know the specific command for decompressing the file. The function will create a new folder and extract the files into it.
-> For details on which files can be decompressed: [SinclairLin/zsh-extract](https://github.com/SinclairLin/zsh-extract/blob/master/README.md#supported-file-extensions).
+> Defines an `extract` function; simply execute `extract <filename>` or `x <filename>` to decompress an archive file.
+> This way, you don't need to know the specific command for decompressing files. The function will create a new folder and extract the files into it.
+> For specific files that can be decompressed: [SinclairLin/zsh-extract](https://github.com/SinclairLin/zsh-extract/blob/master/README.md#supported-file-extensions).
 
 - [zsh-randport](https://github.com/SinclairLin/zsh-randport)
 
@@ -103,7 +103,7 @@ git clone https://github.com/SinclairLin/omz ~/.config/zsh && echo 'source ~/.co
 
 - [z.lua](https://github.com/skywind3000/z.lua)
 
-> Using `z <dir>` will jump to the path with the highest "Frecent" (Frequency + Recent) score among all matching paths.
+> Using `z <dir>` will jump to the path with the highest "Frecent" (Frequency + Recency) value among all paths.
 
 **EXAMPLES:**
 
