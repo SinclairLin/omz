@@ -1,6 +1,21 @@
 export RUNEWIDTH_EASTASIAN=0
 export FZF_DEFAULT_OPTS="--height 12 --scrollbar=▌▐ --info=inline-right --layout=reverse --history=$OMZ/cache/fzfhistory"
-export FZF_DEFAULT_COMMAND="fd --exclude={.git,.idea,.vscode,.sass-cache,node_modules,build,dist,vendor} --type f"
+
+if command -v fd >/dev/null 2>&1; then
+    _OMZ_FD_BIN="fd"
+elif command -v fdfind >/dev/null 2>&1; then
+    _OMZ_FD_BIN="fdfind"
+else
+    _OMZ_FD_BIN=""
+fi
+
+if [[ -n "$_OMZ_FD_BIN" ]]; then
+    export FZF_DEFAULT_COMMAND="${_OMZ_FD_BIN} --exclude={.git,.idea,.vscode,.sass-cache,node_modules,build,dist,vendor} --type f"
+else
+    export FZF_DEFAULT_COMMAND="find . -type f 2>/dev/null"
+fi
+
+unset _OMZ_FD_BIN
 # export FZF_PREVIEW_COMMAND='bash $OMZ/lib/file_preview.sh {}'
 export FZF_COMPLETION_TRIGGER='\'
 export FZF_PREVIEW_COMMAND='[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (ccat --color=always {} || highlight -O ansi -l {} || cat {}) 2> /dev/null | head -500'

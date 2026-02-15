@@ -1,4 +1,4 @@
-export OMZ=$(cd $(dirname $0);pwd)
+export OMZ="${${(%):-%N}:A:h}"
 
 source $OMZ/lib/init.sh
 
@@ -20,5 +20,6 @@ source $OMZ/themes/simple.zsh-theme
 
 # configuration
 [ "$_OMZ_APPLY_PREEXEC_HOOK" = "true" ] && _apply_preexec_hook  # file: $OMZ/config/hook.zsh
+[ "$_OMZ_APPLY_PRECMD_TITLE_HOOK" = "false" ] || _apply_precmd_title_hook  # file: $OMZ/config/hook.zsh
 [ "$_OMZ_APPLY_CHPWD_HOOK" = "true" ] && _apply_chpwd_hook      # file: $OMZ/config/hook.zsh
 [ "$_OMZ_APPLY_HISTORYBYFZF" = "false" ] || _apply_historybyfzf # file: $OMZ/config/fzf.zsh
