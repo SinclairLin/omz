@@ -20,6 +20,8 @@
 │   ├── z.lua/
 │   ├── zsh-autosuggestions/
 │   └── zsh-syntax-highlighting/
+├── scripts/
+│   └── install_zsh_config.sh
 ├── themes/
 │   └── simple.zsh-theme
 └── omz.zsh
@@ -29,9 +31,20 @@
 ### 自动安装
 理论上可以支持大多数发行版，请自行测试，**运行前务必备份！**
 ```
-curl -fsSL https://gist.github.com/SinclairLin/44f875848194b5503b5926c50e37840f/raw/993d186fd1c11903fd5abb368579fce13bb8b96a/install_zsh_config.sh -o install_zsh_config.sh
+curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh -o install_zsh_config.sh
 chmod +x install_zsh_config.sh
 ./install_zsh_config.sh
+```
+
+> 注意：自动安装脚本会优先使用系统包管理器，Debian stable/oldstable 上部分依赖版本可能偏旧。
+> 建议安装后手动检查版本，必要时再单独升级关键依赖。
+
+快速检查：
+```
+zsh --version
+lua -v
+fzf --version
+fd --version || fdfind --version
 ```
 
 ### 手动安装
@@ -45,6 +58,7 @@ sudo pacman -S zsh lua fd
 in Debian:
 ```
 sudo apt install zsh lua5.4 fd-find 
+command -v fd >/dev/null 2>&1 || sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
 ```
 
 in OpenWrt:
@@ -63,6 +77,9 @@ fd --version
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
 ```
+
+- 可选增强工具（版本过旧时建议自行升级）
+`eza`/`bat`/`ueberzug`/`img2txt`/`lazygit`/`ranger`
 
 #### source
 clone 我的配置到`~/.config`：
@@ -113,4 +130,3 @@ z -b foo    # 跳转到父目录中名称以 foo 开头的那一级
 - [fzf-tab](https://github.com/Aloxaf/fzf-tab)
 
 > 将`Zsh`的默认补全选择菜单替换为[fzf](https://github.com/junegunn/fzf)。
-
