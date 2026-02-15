@@ -1,7 +1,7 @@
-中文 | [English](./README.md)
+[English](./README.md) | 中文
 
 ## 目录结构
-```
+```text
 ./
 ├── cache/
 ├── config/
@@ -32,19 +32,17 @@
 
 ### 自动安装
 理论上可以支持大多数发行版，请自行测试，**运行前务必备份！**
-```
-curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh -o install_zsh_config.sh
-chmod +x install_zsh_config.sh
-./install_zsh_config.sh
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
 ```
 
 > 注意：自动安装脚本会优先使用系统包管理器，Debian stable/oldstable 上部分依赖版本可能偏旧。
 > 建议安装后手动检查版本，必要时再单独升级关键依赖。
 
 快速检查：
-```
-zsh --version
-lua -v
+
+```bash
 fzf --version
 fd --version || fdfind --version
 ```
@@ -53,18 +51,21 @@ fd --version || fdfind --version
 #### Requires
 - `Zsh`,`lua`,`fd`
 in Arch Linux:
-```
+
+```bash
 sudo pacman -S zsh lua fd
 ```
 
 in Debian:
-```
+
+```bash
 sudo apt install zsh lua5.4 fd-find 
 command -v fd >/dev/null 2>&1 || sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
 ```
 
 in OpenWrt:
-```
+
+```bash
 opkg install zsh
 sed -i 's|:/bin/ash|:/usr/bin/zsh|g' /etc/passwd    # 更换默认shell
 wget https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz
@@ -75,19 +76,17 @@ fd --version
 ```
 
 - fzf
-```
+
+```bash
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
 ```
 
-- 可选增强工具（版本过旧时建议自行升级）
-`eza`/`bat`/`ueberzug`/`img2txt`/`lazygit`/`ranger`
-
 #### source
 clone 我的配置到`~/.config`：
-```
-git clone https://github.com/SinclairLin/omz ~/.config/zsh && \
-echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
+
+```bash
+git clone https://github.com/SinclairLin/omz ~/.config/zsh && echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
 ```
 
 ## Plugins
@@ -107,7 +106,8 @@ echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
 > 使用`z <dir>`会帮你跳转到所有的路径里 Frecent 值最高的那条路径去。
 
 **EXAMPLES:**
-```
+
+```bash
 z foo       # 跳转到包含 foo 并且权重（Frecent）最高的路径
 z foo bar   # 跳转到同时包含 foo 和 bar 并且权重最高的路径
 z -r foo    # 跳转到包含 foo 并且访问次数最高的路径

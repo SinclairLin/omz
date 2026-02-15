@@ -1,4 +1,4 @@
-[中文](./README.zh-CN.md) | English
+English | [中文](./README.zh-CN.md) 
 
 ## Directory Structure
 ```text
@@ -35,13 +35,7 @@
 In theory this should work on most Linux distributions. Please test in your environment and **back up first** before running.
 
 ```bash
-<<<<<<< HEAD
-curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh -o install_zsh_config.sh
-chmod +x install_zsh_config.sh
-./install_zsh_config.sh
-=======
 curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
->>>>>>> origin/main
 ```
 
 > Note: The installer prefers your system package manager. On Debian stable/oldstable, some dependency versions may be old.
@@ -50,11 +44,6 @@ curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/instal
 Quick checks:
 
 ```bash
-<<<<<<< HEAD
-zsh --version
-lua -v
-=======
->>>>>>> origin/main
 fzf --version
 fd --version || fdfind --version
 ```
@@ -95,23 +84,11 @@ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
 ```
 
-<<<<<<< HEAD
-- Optional enhancements (upgrade manually if distro versions are too old):
-`eza` / `bat` / `ueberzug` / `img2txt` / `lazygit` / `ranger`
-
-#### Source
-Clone this config to `~/.config`:
-
-```bash
-git clone https://github.com/SinclairLin/omz ~/.config/zsh && \
-echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
-=======
 #### Source
 Clone this config to `~/.config`:
 
 ```bash
 git clone https://github.com/SinclairLin/omz ~/.config/zsh && echo 'source ~/.config/zsh/omz.zsh' >> ~/.zshrc
->>>>>>> origin/main
 ```
 
 ## Plugins
