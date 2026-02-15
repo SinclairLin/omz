@@ -1,4 +1,4 @@
-[中文](./README.zh-CN.md) | English
+English | [中文](./README.zh-CN.md) 
 
 ## Directory Structure
 ```text
