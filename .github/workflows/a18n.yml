@@ -55,11 +55,19 @@ jobs:
           with open("README.zh-CN.md", "r", encoding="utf-8") as f:
               source = f.read()
 
+          lines = source.splitlines()
+          # README.md should always keep English-first switch line.
+          lang_switch = "English | [中文](./README.zh-CN.md)"
+          body = source
+          if lines and ("English" in lines[0] and "README.md" in lines[0]):
+              body = "\n".join(lines[1:]).lstrip("\n")
+
           prompt = (
               "Translate the following Markdown from Chinese to English. "
+              "Do not add or modify language-switch lines. "
               "Keep Markdown structure, headings, code blocks, commands, links, and file paths unchanged. "
               "Translate natural language only. Return Markdown only.\n\n"
-              + source
+              + body
           )
 
           resp = client.chat.completions.create(
@@ -71,7 +79,8 @@ jobs:
               ],
           )
 
-          text = (resp.choices[0].message.content or "").strip() + "\n"
+          translated_body = (resp.choices[0].message.content or "").strip()
+          text = f"{lang_switch}\n\n{translated_body}\n"
           with open("README.md", "w", encoding="utf-8") as f:
               f.write(text)
           PY
