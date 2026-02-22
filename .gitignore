@@ -1,2 +1,3 @@
 cache/*
 !cache/holder
+config/env-self.zsh
