@@ -34,3 +34,12 @@ _apply_chpwd_hook() {
     currentdir=$(cat $OMZ/cache/currentdir 2>/dev/null)
     [ -d "$currentdir" ] && cd $currentdir
 }
+
+# kitty ssh
+ssh() {
+  if [ "${TERM:-}" = "xterm-kitty" ] && command -v kitten >/dev/null 2>&1; then
+    kitten ssh "$@"
+  else
+    command ssh "$@"
+  fi
+}
