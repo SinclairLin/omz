@@ -35,11 +35,3 @@ _apply_chpwd_hook() {
     [ -d "$currentdir" ] && cd $currentdir
 }
 
-# kitty ssh
-ssh() {
-  if [ "${TERM:-}" = "xterm-kitty" ] && command -v kitten >/dev/null 2>&1; then
-    kitten ssh "$@"
-  else
-    command ssh "$@"
-  fi
-}
