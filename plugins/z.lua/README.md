@@ -28,7 +28,7 @@ From people using z.lua:
 - **10x** times faster than **fasd** and **autojump**, **3x** times faster than **z.sh**.
 - Gain the ultimate speed with an optional [native module](https://github.com/skywind3000/czmod) written in C.
 - Available for **posix shells**: bash, zsh, dash, sh, ash, ksh, busybox and etc.
-- Available for Fish Shell, Power Shell and Windows cmd.
+- Available for Fish Shell, Nushell, Power Shell and Windows cmd.
 - [Enhanced matching algorithm](#enhanced-matching) takes you to where ever you want precisely.
 - Allow updating database only if `$PWD` changed with "$_ZL_ADD_ONCE" set to 1.
 - Interactive selection enables you to choose where to go before cd.
@@ -78,6 +78,12 @@ z -b foo bar # replace foo with bar in cwd and cd there
 
       eval "$(lua /path/to/z.lua --init bash enhanced once fzf)"
   
+  NixOS users using home-manager can add this to their user profile:
+
+      programs.z-lua.enable = true;
+      programs.z-lua.enableBashIntegration = true;
+      programs.z-lua.options = [ "enhanced" "once" "fzf" ];  # modify as needed
+
   **NOTE**: For wsl-1 users, `lua-filesystem` must be installed:
 
       sudo apt-get install lua-filesystem
@@ -90,7 +96,13 @@ z -b foo bar # replace foo with bar in cwd and cd there
 
       eval "$(lua /path/to/z.lua --init zsh)"
 
-  Options like "enhanced" and "once" can be used after `--init` too. It can also be initialized from "skywind3000/z.lua" with your zsh plugin managers (antigen / oh-my-zsh).
+  Options like "enhanced", "once" and "fzf" can be used after `--init` too. It can also be initialized from "skywind3000/z.lua" with your zsh plugin managers (antigen / oh-my-zsh).
+
+  NixOS users using home-manager can add this to their user profile:
+
+      programs.z-lua.enable = true;
+      programs.z-lua.enableZshIntegration = true;
+      programs.z-lua.options = [ "enhanced" "once" "fzf" ];  # modify as needed
 
   **NOTE**: for wsl-1 users, `lua-filesystem` must be installed.
 
@@ -117,6 +129,24 @@ z -b foo bar # replace foo with bar in cwd and cd there
       set -gx _ZL_CD cd
 
   into the same file.
+
+  NixOS users using home-manager can add this to their user profile:
+
+      programs.z-lua.enable = true;
+      programs.z-lua.enableFishIntegration = true;
+      programs.z-lua.options = [ "enhanced" "once" "fzf" ];  # modify as needed
+
+- Nushell
+
+  Put something like this in your `env.nu`:
+
+      lua /path/to/z.lua --init nushell | save -f ~/.cache/zlua.nu
+
+  Then put something like this in your `config.nu`:
+
+      source ~/.cache/zlua.nu
+
+  Note: Only Nushell v0.96+ is supported
 
 - Power Shell:
 
@@ -160,7 +190,12 @@ z -b foo bar # replace foo with bar in cwd and cd there
 - set `$_ZL_ECHO` to 1 to display new directory name after cd.
 - set `$_ZL_MATCH_MODE` to 1 to enable enhanced matching.
 - set `$_ZL_NO_CHECK` to 1 to disable path validation, use `z --purge` to clean
-- set `$_ZL_HYPHEN` to 1 to treat hyphon (-) as a normal character not a lua regexp keyword.
+- set `$_ZL_HYPHEN` to 0 to treat a hyphen (`-`) as a
+  [lua regexp special character](https://www.lua.org/pil/20.2.html),
+  set `$_ZL_HYPHEN` to 1 to treat a hyphen as a normal character.
+  If `$_ZL_HYPHEN` is not set or if it is set to `auto`, z.lua tries to treat `-`
+  as a lua regexp special character first. If there are no matches, z.lua tries
+  again, this time treating `-` as a normal character.
 - set `$_ZL_CLINK_PROMPT_PRIORITY` change clink prompt register priority (default 99).
 
 ## Aging
@@ -380,6 +415,12 @@ Bash is not as powerful as zsh/fish, so we introduced fzf-completion for bash, i
 eval "$(lua /path/to/z.lua --init bash enhanced once echo fzf)"
 ```
 
+If you want use fzf completion in zsh, initalize your z.lua and append `fzf` keyword after `--init`:
+
+```zsh
+eval "$(lua /path/to/z.lua --init zsh enhanced once echo fzf)"
+```
+
 Then press `<tab>` after `z xxx`:
 
 ![](images/complete-2.png)
@@ -576,6 +617,7 @@ This project needs help for the tasks below:
 - Thanks to [@manhong2112](https://github.com/manhong2112) for Power Shell porting.
 - Thanks to [@BarbUk](https://github.com/BarbUk) for fzf completion in Bash.
 - Thanks to [@barlik](https://github.com/barlik) for many improvements.
+- Thanks to [@brglng](https://github.com/brglng) for nushell porting.
 
 And many others.
 
