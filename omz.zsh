@@ -4,6 +4,7 @@ source $OMZ/lib/init.sh
 
 source $OMZ/config/aliases.zsh
 source $OMZ/config/env.zsh
+[ -f $OMZ/config/env-self.zsh ] && source $OMZ/config/env-self.zsh
 source $OMZ/config/fzf.zsh
 source $OMZ/config/git.zsh
 source $OMZ/config/hook.zsh
