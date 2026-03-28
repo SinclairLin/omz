@@ -15,6 +15,7 @@ source $OMZ/plugins/fzf-tab/fzf-tab.zsh
 source $OMZ/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source $OMZ/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source $OMZ/plugins/randport/randport.plugin.zsh
+source $OMZ/plugins/docker-tools/docker-tools.zsh
 
 source $OMZ/themes/simple.zsh-theme
 # source $HOME/uservenv/bin/activate
