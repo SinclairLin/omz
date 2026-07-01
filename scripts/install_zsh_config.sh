@@ -9,6 +9,12 @@ SOURCE_LINE="source ~/.config/zsh/omz.zsh"
 MIN_FZF_VERSION="0.30.0"
 MIN_FD_VERSION="8.0.0"
 
+OS_NAME=""
+OS_ID=""
+OS_LIKE=""
+OS_ARCH=""
+BREW_BIN=""
+
 log() {
   printf "[install] %s\n" "$*"
 }
@@ -26,8 +32,34 @@ need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
 }
 
+need_lua() {
+  local lua_bin
+
+  for lua_bin in lua luajit lua5.4 lua5.3 lua5.2 lua5.1; do
+    command -v "$lua_bin" >/dev/null 2>&1 && return
+  done
+
+  die "missing required command: lua"
+}
+
 version_ge() {
-  [ "$(printf '%s\n' "$2" "$1" | sort -V | tail -n1)" = "$1" ]
+  awk -v current="$1" -v required="$2" 'BEGIN {
+    current_count = split(current, current_parts, ".")
+    required_count = split(required, required_parts, ".")
+    count = current_count > required_count ? current_count : required_count
+
+    for (i = 1; i <= count; i++) {
+      sub(/[^0-9].*$/, "", current_parts[i])
+      sub(/[^0-9].*$/, "", required_parts[i])
+      current_part = current_parts[i] + 0
+      required_part = required_parts[i] + 0
+
+      if (current_part > required_part) exit 0
+      if (current_part < required_part) exit 1
+    }
+
+    exit 0
+  }'
 }
 
 as_root() {
@@ -41,14 +73,56 @@ as_root() {
 }
 
 detect_os() {
+  OS_NAME="$(uname -s 2>/dev/null || true)"
+  OS_ARCH="$(uname -m 2>/dev/null || true)"
   OS_ID=""
   OS_LIKE=""
+
+  if [ "$OS_NAME" = "Darwin" ]; then
+    OS_ID="macos"
+    return
+  fi
+
   if [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
     OS_ID="${ID:-}"
     OS_LIKE="${ID_LIKE:-}"
   fi
+}
+
+find_brew() {
+  if command -v brew >/dev/null 2>&1; then
+    BREW_BIN="$(command -v brew)"
+  elif [ -x /opt/homebrew/bin/brew ]; then
+    BREW_BIN="/opt/homebrew/bin/brew"
+  elif [ -x /usr/local/bin/brew ]; then
+    BREW_BIN="/usr/local/bin/brew"
+  else
+    return 1
+  fi
+}
+
+install_macos() {
+  local brew_prefix
+
+  if [ "$OS_ARCH" != "arm64" ]; then
+    warn "macOS architecture $OS_ARCH is supported on a best-effort basis; CI covers Apple Silicon only"
+  fi
+
+  if ! find_brew; then
+    warn "Homebrew is required on macOS and was not found."
+    warn "Install it from https://brew.sh/ and rerun this script."
+    warn 'Official command: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    exit 1
+  fi
+
+  log "installing macOS dependencies via Homebrew"
+  "$BREW_BIN" install lua fd fzf
+
+  brew_prefix="$("$BREW_BIN" --prefix)"
+  PATH="$brew_prefix/bin:$brew_prefix/sbin:$PATH"
+  export PATH
 }
 
 install_debian_like() {
@@ -76,6 +150,9 @@ install_openwrt() {
 install_base_deps() {
   detect_os
   case "$OS_ID" in
+    macos)
+      install_macos
+      ;;
     debian|ubuntu|linuxmint|kali|raspbian)
       install_debian_like
       ;;
@@ -90,7 +167,7 @@ install_base_deps() {
         *debian*) install_debian_like ;;
         *arch*) install_arch_like ;;
         *)
-          warn "unsupported distro: ID=$OS_ID, ID_LIKE=$OS_LIKE"
+          warn "unsupported system: OS=$OS_NAME, ID=$OS_ID, ID_LIKE=$OS_LIKE"
           warn "please install manually: zsh git curl lua fd/fdfind"
           ;;
       esac
@@ -174,10 +251,11 @@ print_next_steps() {
 }
 
 main() {
+  install_base_deps
+  need_cmd zsh
   need_cmd git
   need_cmd curl
-
-  install_base_deps
+  need_lua
   install_or_update_fzf
   install_repo
   ensure_source_line
@@ -185,4 +263,6 @@ main() {
   print_next_steps
 }
 
-main "$@"
+if [ "${OMZ_INSTALLER_SKIP_MAIN:-0}" != "1" ]; then
+  main "$@"
+fi

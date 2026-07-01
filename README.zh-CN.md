@@ -31,7 +31,7 @@
 ## Installation
 
 ### 自动安装
-理论上可以支持大多数发行版，请自行测试，**运行前务必备份！**
+支持 Debian、Arch Linux、OpenWrt 等现有 Linux 安装路径，并正式支持 macOS 14 及以上的 Apple Silicon Mac。Intel Mac 会尽力兼容，但目前不在 CI 保证范围内。**运行前务必备份！**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
@@ -39,10 +39,14 @@ curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/instal
 
 > 注意：自动安装脚本会优先使用系统包管理器，Debian stable/oldstable 上部分依赖版本可能偏旧。
 > 建议安装后手动检查版本，必要时再单独升级关键依赖。
+>
+> macOS 需要预先安装并配置好 [Homebrew](https://brew.sh/)。为避免未经确认的权限和系统改动，本脚本不会自动安装 Homebrew；缺少 Homebrew 时会显示安装指引并退出。
 
 快速检查：
 
 ```bash
+zsh --version
+lua -v
 fzf --version
 fd --version || fdfind --version
 ```
@@ -50,6 +54,13 @@ fd --version || fdfind --version
 ### 手动安装
 #### Requires
 - `Zsh`,`lua`,`fd`
+
+在 macOS 14+（Apple Silicon）中，使用系统自带的 Zsh、Git、curl，并通过 Homebrew 安装其余依赖：
+
+```bash
+brew install lua fd fzf
+```
+
 in Arch Linux:
 
 ```bash

@@ -18,7 +18,7 @@ elif [ "$category" = text ]; then
         cat "$1" 2>/dev/null | head -1000
     fi
 elif [ "$category" = image ]; then
-    if command -v ueberzug >/dev/null 2>&1; then
+    if [ "$(uname -s 2>/dev/null)" != "Darwin" ] && command -v ueberzug >/dev/null 2>&1; then
         bash "$OMZ/lib/img_preview.sh" "$1"
     elif command -v img2txt >/dev/null 2>&1; then
         img2txt "$1"

@@ -31,7 +31,7 @@ English | [中文](./README.zh-CN.md)
 ## Installation
 
 ### Automatic Installation
-Theoretically supports most distributions; please test it yourself. **Make sure to back up before running!**
+The installer supports the existing Debian, Arch Linux, and OpenWrt paths, with official support for Apple Silicon Macs running macOS 14 or newer. Intel Macs are supported on a best-effort basis but are not currently covered by CI. **Make sure to back up before running!**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
@@ -39,10 +39,14 @@ curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/instal
 
 > Note: The automatic installation script prioritizes the system package manager. Some dependency versions on Debian stable/oldstable might be outdated.
 > It is recommended to manually check versions after installation and upgrade key dependencies individually if necessary.
+>
+> macOS requires [Homebrew](https://brew.sh/) to be installed and configured first. To avoid unapproved privilege and system changes, this script does not install Homebrew automatically; it prints installation guidance and exits when Homebrew is missing.
 
 Quick check:
 
 ```bash
+zsh --version
+lua -v
 fzf --version
 fd --version || fdfind --version
 ```
@@ -50,6 +54,13 @@ fd --version || fdfind --version
 ### Manual Installation
 #### Requires
 - `Zsh`,`lua`,`fd`
+
+On macOS 14+ (Apple Silicon), use the system-provided Zsh, Git, and curl, then install the remaining dependencies through Homebrew:
+
+```bash
+brew install lua fd fzf
+```
+
 in Arch Linux:
 
 ```bash

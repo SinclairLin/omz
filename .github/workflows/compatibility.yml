@@ -1,0 +1,53 @@
+name: shell-compatibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-14
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh lua5.4 fd-find fzf lsof
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install lua fd fzf
+
+      - name: Check installed dependencies
+        run: |
+          zsh --version
+          fzf --version
+          fd --version || fdfind --version
+          lua -v || lua5.4 -v
+
+      - name: Check shell syntax
+        run: |
+          bash -n scripts/install_zsh_config.sh lib/*.sh tests/test_installer.sh
+          zsh -n omz.zsh config/*.zsh themes/*.zsh-theme \
+            plugins/docker-tools/docker-tools.zsh \
+            plugins/randport/randport.plugin.zsh \
+            tests/test_runtime.zsh
+
+      - name: Test installer behavior
+        run: bash tests/test_installer.sh
+
+      - name: Test runtime behavior
+        run: zsh tests/test_runtime.zsh
