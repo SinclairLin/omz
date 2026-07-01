@@ -32,15 +32,20 @@ zstyle -s ':fzf-tab:complete:kill:argument-rest' fzf-preview process_preview
 [[ "$process_preview" == *'ps --pid="$word"'* ]] || fail "Linux process preview lost GNU ps support"
 
 source "$ROOT_DIR/plugins/randport/randport.plugin.zsh"
-typeset -gi port_checks=0
+typeset -gi first_checked_port=0
 _omz_port_in_use() {
-  (( port_checks++ == 0 )) && return 0
+  if (( first_checked_port == 0 )); then
+    first_checked_port=$1
+    return 0
+  fi
+
+  local expected_port=$((49152 + (first_checked_port - 49152 + 1) % 16384))
+  (( $1 == expected_port )) || return 2
   return 1
 }
 
-RANDOM=1
 port=$(randport) || fail "randport did not return a port"
-[[ "$port" == 49576 ]] || fail "randport did not skip the occupied port: $port"
+[[ "$port" == <49152-65535> ]] || fail "randport returned an invalid port: $port"
 
 _omz_port_in_use() {
   return 2
