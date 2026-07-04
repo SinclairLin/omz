@@ -34,13 +34,15 @@
 支持 Debian、Arch Linux、OpenWrt 等现有 Linux 安装路径，并正式支持 macOS 14 及以上的 Apple Silicon Mac。Intel Mac 会尽力兼容，但目前不在 CI 保证范围内。**运行前务必备份！**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | sh
 ```
 
 > 注意：自动安装脚本会优先使用系统包管理器，Debian stable/oldstable 上部分依赖版本可能偏旧。
 > 建议安装后手动检查版本，必要时再单独升级关键依赖。
 >
 > macOS 需要预先安装并配置好 [Homebrew](https://brew.sh/)。为避免未经确认的权限和系统改动，本脚本不会自动安装 Homebrew；缺少 Homebrew 时会显示安装指引并退出。
+>
+> 安装器可以用 `/bin/sh` 启动，因此 OpenWrt 在尚未安装 `bash` 时也能完成 bootstrap。OpenWrt 分支仍会安装 `bash`，因为上游 `fzf` 安装器需要它。
 
 快速检查：
 
@@ -77,7 +79,13 @@ command -v fd >/dev/null 2>&1 || sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
 in OpenWrt:
 
 ```bash
-opkg install zsh
+if command -v apk >/dev/null 2>&1; then
+  apk update
+  apk add --no-cache bash zsh git git-http curl lua5.4
+else
+  opkg update
+  opkg install bash zsh git git-http curl lua
+fi
 sed -i 's|:/bin/ash|:/usr/bin/zsh|g' /etc/passwd    # 更换默认shell
 wget https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz
 tar -zxvf fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz

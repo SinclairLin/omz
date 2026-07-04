@@ -83,9 +83,74 @@ assert_contains "$missing_brew_output" "Homebrew is required"
 assert_contains "$missing_brew_output" "https://brew.sh/"
 
 ZSHRC_FILE="$TEST_TMP/.zshrc"
-SOURCE_LINE="source ~/.config/zsh/omz.zsh"
+SOURCE_LINE=""
+TARGET_DIR="$HOME/.config/zsh"
 ensure_source_line
 ensure_source_line
-[ "$(grep -cFx "$SOURCE_LINE" "$ZSHRC_FILE")" -eq 1 ] || fail "source line should be idempotent"
+[ "$(grep -cFx "source ~/.config/zsh/omz.zsh" "$ZSHRC_FILE")" -eq 1 ] || fail "source line should be idempotent"
+
+CUSTOM_TARGET="$TEST_TMP/custom zsh"
+CUSTOM_ZSHRC="$TEST_TMP/custom.zshrc"
+TARGET_DIR="$CUSTOM_TARGET"
+ZSHRC_FILE="$CUSTOM_ZSHRC"
+ensure_source_line
+[ "$(cat "$CUSTOM_ZSHRC")" = "source \"$CUSTOM_TARGET/omz.zsh\"" ] || fail "custom TARGET_DIR should be reflected in source line"
+
+mkdir -p "$TEST_TMP/openwrt-bin"
+cat >"$TEST_TMP/openwrt-bin/apk" <<'EOF'
+#!/usr/bin/env sh
+exit 0
+EOF
+cat >"$TEST_TMP/openwrt-bin/fd" <<'EOF'
+#!/usr/bin/env sh
+exit 0
+EOF
+chmod +x "$TEST_TMP/openwrt-bin/apk"
+chmod +x "$TEST_TMP/openwrt-bin/fd"
+OPENWRT_LOG="$TEST_TMP/openwrt.log"
+(
+  PATH="$TEST_TMP/openwrt-bin:$PATH"
+  as_root() {
+    printf '%s\n' "$*" >>"$OPENWRT_LOG"
+  }
+
+  install_openwrt
+)
+assert_contains "$(cat "$OPENWRT_LOG")" "apk update"
+assert_contains "$(cat "$OPENWRT_LOG")" "apk add --no-cache bash zsh git git-http curl lua5.4"
+
+EMPTY_TARGET="$TEST_TMP/empty-target"
+mkdir -p "$EMPTY_TARGET"
+(
+  TARGET_DIR="$EMPTY_TARGET"
+  REPO_URL="https://example.invalid/omz.git"
+  git() {
+    [ "$1" = "clone" ] || fail "unexpected git command: $*"
+    mkdir -p "$3/.git"
+  }
+
+  install_repo
+)
+[ -d "$EMPTY_TARGET/.git" ] || fail "empty target directory should be cloned into"
+
+NON_GIT_TARGET="$TEST_TMP/non-git-target"
+mkdir -p "$NON_GIT_TARGET"
+touch "$NON_GIT_TARGET/file"
+if non_git_output="$(TARGET_DIR="$NON_GIT_TARGET" install_repo 2>&1)"; then
+  fail "non-git target directory should stop installation"
+fi
+assert_contains "$non_git_output" "exists but is not a git repo"
+
+FZF_HOME="$TEST_TMP/fzf-home"
+mkdir -p "$FZF_HOME/.fzf/bin"
+(
+  HOME="$FZF_HOME"
+  PATH="/usr/bin:/bin"
+  add_fzf_path
+  case ":$PATH:" in
+    *":$FZF_HOME/.fzf/bin:"*) ;;
+    *) fail "fzf install path should be added to PATH" ;;
+  esac
+)
 
 printf 'installer tests passed\n'

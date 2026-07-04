@@ -34,13 +34,15 @@ English | [中文](./README.zh-CN.md)
 The installer supports the existing Debian, Arch Linux, and OpenWrt paths, with official support for Apple Silicon Macs running macOS 14 or newer. Intel Macs are supported on a best-effort basis but are not currently covered by CI. **Make sure to back up before running!**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SinclairLin/omz/main/scripts/install_zsh_config.sh | sh
 ```
 
 > Note: The automatic installation script prioritizes the system package manager. Some dependency versions on Debian stable/oldstable might be outdated.
 > It is recommended to manually check versions after installation and upgrade key dependencies individually if necessary.
 >
 > macOS requires [Homebrew](https://brew.sh/) to be installed and configured first. To avoid unapproved privilege and system changes, this script does not install Homebrew automatically; it prints installation guidance and exits when Homebrew is missing.
+>
+> The installer can be started with `/bin/sh`, which keeps OpenWrt bootstrap working even before `bash` is installed. On OpenWrt, `bash` is installed as a dependency because the upstream `fzf` installer uses it.
 
 Quick check:
 
@@ -77,7 +79,13 @@ command -v fd >/dev/null 2>&1 || sudo ln -s /usr/bin/fdfind /usr/local/bin/fd
 in OpenWrt:
 
 ```bash
-opkg install zsh
+if command -v apk >/dev/null 2>&1; then
+  apk update
+  apk add --no-cache bash zsh git git-http curl lua5.4
+else
+  opkg update
+  opkg install bash zsh git git-http curl lua
+fi
 sed -i 's|:/bin/ash|:/usr/bin/zsh|g' /etc/passwd    # Change default shell
 wget https://github.com/sharkdp/fd/releases/download/v10.3.0/fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz
 tar -zxvf fd-v10.3.0-aarch64-unknown-linux-musl.tar.gz

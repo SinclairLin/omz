@@ -1,13 +1,17 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
+if (set -o pipefail) 2>/dev/null; then
+  set -o pipefail
+fi
 
 REPO_URL="${REPO_URL:-https://github.com/SinclairLin/omz}"
 TARGET_DIR="${TARGET_DIR:-$HOME/.config/zsh}"
 ZSHRC_FILE="${ZSHRC_FILE:-$HOME/.zshrc}"
-SOURCE_LINE="source ~/.config/zsh/omz.zsh"
+SOURCE_LINE="${SOURCE_LINE:-}"
 
 MIN_FZF_VERSION="0.30.0"
 MIN_FD_VERSION="8.0.0"
+FD_RELEASE_VERSION="${FD_RELEASE_VERSION:-10.3.0}"
 
 OS_NAME=""
 OS_ID=""
@@ -141,10 +145,55 @@ install_arch_like() {
   as_root pacman -Sy --noconfirm zsh git curl lua fd
 }
 
+install_openwrt_fd() {
+  fd_arch=""
+  case "$(uname -m 2>/dev/null || true)" in
+    x86_64|amd64)
+      fd_arch="x86_64-unknown-linux-musl"
+      ;;
+    aarch64|arm64)
+      fd_arch="aarch64-unknown-linux-musl"
+      ;;
+    *)
+      warn "fd is not available from OpenWrt packages and no bundled fd release is configured for $(uname -m 2>/dev/null || echo unknown)"
+      return
+      ;;
+  esac
+
+  fd_archive="fd-v${FD_RELEASE_VERSION}-${fd_arch}"
+  fd_tmp_dir="$(mktemp -d)"
+  fd_url="https://github.com/sharkdp/fd/releases/download/v${FD_RELEASE_VERSION}/${fd_archive}.tar.gz"
+
+  log "installing fd from upstream release"
+  if curl -fsSL "$fd_url" -o "$fd_tmp_dir/fd.tar.gz" &&
+    tar -xzf "$fd_tmp_dir/fd.tar.gz" -C "$fd_tmp_dir" &&
+    [ -x "$fd_tmp_dir/$fd_archive/fd" ] &&
+    as_root cp "$fd_tmp_dir/$fd_archive/fd" /usr/bin/fd &&
+    as_root chmod +x /usr/bin/fd; then
+    log "installed fd to /usr/bin/fd"
+  else
+    warn "failed to install fd from $fd_url"
+  fi
+
+  rm -rf "$fd_tmp_dir"
+}
+
 install_openwrt() {
-  log "installing base dependencies via opkg"
-  as_root opkg update || true
-  as_root opkg install zsh git curl lua || true
+  if command -v apk >/dev/null 2>&1; then
+    log "installing base dependencies via apk"
+    as_root apk update
+    as_root apk add --no-cache bash zsh git git-http curl lua5.4
+  elif command -v opkg >/dev/null 2>&1; then
+    log "installing base dependencies via opkg"
+    as_root opkg update
+    as_root opkg install bash zsh git git-http curl lua
+  else
+    die "missing OpenWrt package manager: apk or opkg"
+  fi
+
+  if ! command -v fd >/dev/null 2>&1 && ! command -v fdfind >/dev/null 2>&1; then
+    install_openwrt_fd
+  fi
 }
 
 install_base_deps() {
@@ -168,14 +217,32 @@ install_base_deps() {
         *arch*) install_arch_like ;;
         *)
           warn "unsupported system: OS=$OS_NAME, ID=$OS_ID, ID_LIKE=$OS_LIKE"
-          warn "please install manually: zsh git curl lua fd/fdfind"
+          warn "please install manually: bash zsh git curl lua fd/fdfind"
           ;;
       esac
       ;;
   esac
 }
 
+prepend_path() {
+  case ":$PATH:" in
+    *":$1:"*) ;;
+    *)
+      PATH="$1:$PATH"
+      export PATH
+      ;;
+  esac
+}
+
+add_fzf_path() {
+  if [ -d "$HOME/.fzf/bin" ]; then
+    prepend_path "$HOME/.fzf/bin"
+  fi
+}
+
 install_or_update_fzf() {
+  add_fzf_path
+
   if [ -d "$HOME/.fzf/.git" ]; then
     log "updating fzf"
     git -C "$HOME/.fzf" pull --ff-only || warn "failed to update fzf, keep current version"
@@ -187,6 +254,8 @@ install_or_update_fzf() {
   if [ -x "$HOME/.fzf/install" ]; then
     "$HOME/.fzf/install" --all --no-bash --no-fish >/dev/null
   fi
+
+  add_fzf_path
 }
 
 check_versions() {
@@ -223,18 +292,40 @@ install_repo() {
     log "updating existing repo: $TARGET_DIR"
     git -C "$TARGET_DIR" pull --ff-only
   elif [ -d "$TARGET_DIR" ]; then
-    warn "$TARGET_DIR exists but is not a git repo; skip clone"
+    if [ -z "$(find "$TARGET_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+      log "cloning config to empty directory: $TARGET_DIR"
+      git clone "$REPO_URL" "$TARGET_DIR"
+    else
+      die "$TARGET_DIR exists but is not a git repo; move it away or set TARGET_DIR to another path"
+    fi
   else
     log "cloning config to $TARGET_DIR"
     git clone "$REPO_URL" "$TARGET_DIR"
   fi
 }
 
+default_source_line() {
+  if [ "$TARGET_DIR" = "$HOME/.config/zsh" ]; then
+    printf '%s\n' "source ~/.config/zsh/omz.zsh"
+  else
+    printf 'source "%s/omz.zsh"\n' "$(printf '%s' "$TARGET_DIR" | sed 's/["\`$\\]/\\&/g')"
+  fi
+}
+
+source_line() {
+  if [ -n "$SOURCE_LINE" ]; then
+    printf '%s\n' "$SOURCE_LINE"
+  else
+    default_source_line
+  fi
+}
+
 ensure_source_line() {
+  current_source_line="$(source_line)"
   touch "$ZSHRC_FILE"
-  if ! grep -qxF "$SOURCE_LINE" "$ZSHRC_FILE"; then
+  if ! grep -qxF "$current_source_line" "$ZSHRC_FILE"; then
     log "adding source line to $ZSHRC_FILE"
-    printf "%s\n" "$SOURCE_LINE" >>"$ZSHRC_FILE"
+    printf "%s\n" "$current_source_line" >>"$ZSHRC_FILE"
   else
     log "source line already exists in $ZSHRC_FILE"
   fi
