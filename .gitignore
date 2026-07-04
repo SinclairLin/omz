@@ -1,3 +1,15 @@
 cache/*
 !cache/holder
 config/env-self.zsh
+
+# System files
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+__MACOSX/
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
