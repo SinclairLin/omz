@@ -1,67 +1,58 @@
 #!/usr/bin/env sh
 set -eu
-if (set -o pipefail) 2>/dev/null; then
-  set -o pipefail
-fi
 
 REPO_URL="${REPO_URL:-https://github.com/SinclairLin/omz}"
 TARGET_DIR="${TARGET_DIR:-$HOME/.config/zsh}"
-ZSHRC_FILE="${ZSHRC_FILE:-$HOME/.zshrc}"
+ZSHRC_FILE="${ZSHRC_FILE:-${ZDOTDIR:-$HOME}/.zshrc}"
 SOURCE_LINE="${SOURCE_LINE:-}"
-
-MIN_FZF_VERSION="0.30.0"
+OMZ_INSTALL_DEPS="${OMZ_INSTALL_DEPS:-1}"
+MIN_FZF_VERSION="0.51.0"
 MIN_FD_VERSION="8.0.0"
-FD_RELEASE_VERSION="${FD_RELEASE_VERSION:-10.3.0}"
-
 OS_NAME=""
 OS_ID=""
 OS_LIKE=""
 OS_ARCH=""
 BREW_BIN=""
+PACKAGE_MANAGER=""
+INSTALL_PROFILE=""
+INSTALL_LUA=""
+OPTIONS_FILE=""
+MIGRATION_PREVIEW=0
 
-log() {
-  printf "[install] %s\n" "$*"
-}
+log() { printf '[install] %s\n' "$*"; }
+warn() { printf '[warn] %s\n' "$*" >&2; }
+die() { printf '[error] %s\n' "$*" >&2; exit 1; }
+need_cmd() { command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"; }
 
-warn() {
-  printf "[warn] %s\n" "$*" >&2
-}
+usage() {
+  cat <<'HELP'
+Usage: sh scripts/install_zsh_config.sh [--migrate-state-preview]
+Install/update sources, install profile packages, verify pinned plugins, then
+append one source line. --migrate-state-preview only previews legacy state.
 
-die() {
-  printf "[error] %s\n" "$*" >&2
-  exit 1
-}
+Environment:
+  TARGET_DIR       source checkout (default: ~/.config/zsh)
+  ZSHRC_FILE       startup file (default: ${ZDOTDIR:-$HOME}/.zshrc)
+  REPO_URL         source Git URL
+  SOURCE_LINE      optional exact source line
+  OMZ_INSTALL_DEPS 1: system package manager; 0: use installed commands only
+  OMZ_PROFILE      auto/desktop/server/minimal (local.zsh takes precedence)
+  OMZ_JUMP         auto/zoxide/zlua/none (Lua only for compatibility)
+  XDG_*_HOME       absolute config/state/data/cache roots
 
-need_cmd() {
-  command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
-}
-
-need_lua() {
-  local lua_bin
-
-  for lua_bin in lua luajit lua5.4 lua5.3 lua5.2 lua5.1; do
-    command -v "$lua_bin" >/dev/null 2>&1 && return
-  done
-
-  die "missing required command: lua"
+Tools are owned by your package manager. No ~/.fzf updates, Rust compilation,
+default-shell changes, or automatic history/jump imports.
+HELP
 }
 
 version_ge() {
   awk -v current="$1" -v required="$2" 'BEGIN {
-    current_count = split(current, current_parts, ".")
-    required_count = split(required, required_parts, ".")
-    count = current_count > required_count ? current_count : required_count
-
-    for (i = 1; i <= count; i++) {
-      sub(/[^0-9].*$/, "", current_parts[i])
-      sub(/[^0-9].*$/, "", required_parts[i])
-      current_part = current_parts[i] + 0
-      required_part = required_parts[i] + 0
-
-      if (current_part > required_part) exit 0
-      if (current_part < required_part) exit 1
+    n = split(current, a, "."); m = split(required, b, ".")
+    for (i = 1; i <= (n > m ? n : m); i++) {
+      sub(/[^0-9].*$/, "", a[i]); sub(/[^0-9].*$/, "", b[i])
+      if (a[i] + 0 > b[i] + 0) exit 0
+      if (a[i] + 0 < b[i] + 0) exit 1
     }
-
     exit 0
   }'
 }
@@ -77,17 +68,13 @@ as_root() {
 }
 
 detect_os() {
-  OS_NAME="$(uname -s 2>/dev/null || true)"
-  OS_ARCH="$(uname -m 2>/dev/null || true)"
+  OS_NAME="$(uname -s)"
+  OS_ARCH="$(uname -m)"
   OS_ID=""
   OS_LIKE=""
-
-  if [ "$OS_NAME" = "Darwin" ]; then
-    OS_ID="macos"
-    return
-  fi
-
-  if [ -f /etc/os-release ]; then
+  if [ "$OS_NAME" = Darwin ]; then
+    OS_ID=macos
+  elif [ -f /etc/os-release ]; then
     # shellcheck disable=SC1091
     . /etc/os-release
     OS_ID="${ID:-}"
@@ -99,216 +86,184 @@ find_brew() {
   if command -v brew >/dev/null 2>&1; then
     BREW_BIN="$(command -v brew)"
   elif [ -x /opt/homebrew/bin/brew ]; then
-    BREW_BIN="/opt/homebrew/bin/brew"
+    BREW_BIN=/opt/homebrew/bin/brew
   elif [ -x /usr/local/bin/brew ]; then
-    BREW_BIN="/usr/local/bin/brew"
+    BREW_BIN=/usr/local/bin/brew
   else
     return 1
   fi
 }
 
 install_macos() {
-  local brew_prefix
-
-  if [ "$OS_ARCH" != "arm64" ]; then
-    warn "macOS architecture $OS_ARCH is supported on a best-effort basis; CI covers Apple Silicon only"
-  fi
-
   if ! find_brew; then
-    warn "Homebrew is required on macOS and was not found."
-    warn "Install it from https://brew.sh/ and rerun this script."
-    warn 'Official command: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-    exit 1
+    die "Homebrew is required: install it from https://brew.sh/ and rerun, or set OMZ_INSTALL_DEPS=0 with dependencies already installed."
   fi
-
-  log "installing macOS dependencies via Homebrew"
-  "$BREW_BIN" install lua fd fzf
-
+  # macOS provides zsh, git (Command Line Tools), and curl.
   brew_prefix="$("$BREW_BIN" --prefix)"
   PATH="$brew_prefix/bin:$brew_prefix/sbin:$PATH"
   export PATH
+  PACKAGE_MANAGER=brew
+  log "macOS $OS_ARCH; runtime validation scope is recorded in docs/verification.md"
 }
 
 install_debian_like() {
-  log "installing base dependencies via apt"
+  PACKAGE_MANAGER=apt
   as_root apt-get update
-  as_root apt-get install -y zsh git curl lua5.4 fd-find
-
-  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
-    log "linking fdfind to /usr/local/bin/fd"
-    as_root ln -sf "$(command -v fdfind)" /usr/local/bin/fd
-  fi
+  as_root apt-get install -y zsh git curl ca-certificates
 }
 
 install_arch_like() {
-  log "installing base dependencies via pacman"
-  as_root pacman -Sy --noconfirm zsh git curl lua fd
-}
-
-install_openwrt_fd() {
-  fd_arch=""
-  case "$(uname -m 2>/dev/null || true)" in
-    x86_64|amd64)
-      fd_arch="x86_64-unknown-linux-musl"
-      ;;
-    aarch64|arm64)
-      fd_arch="aarch64-unknown-linux-musl"
-      ;;
-    *)
-      warn "fd is not available from OpenWrt packages and no bundled fd release is configured for $(uname -m 2>/dev/null || echo unknown)"
-      return
-      ;;
-  esac
-
-  fd_archive="fd-v${FD_RELEASE_VERSION}-${fd_arch}"
-  fd_tmp_dir="$(mktemp -d)"
-  fd_url="https://github.com/sharkdp/fd/releases/download/v${FD_RELEASE_VERSION}/${fd_archive}.tar.gz"
-
-  log "installing fd from upstream release"
-  if curl -fsSL "$fd_url" -o "$fd_tmp_dir/fd.tar.gz" &&
-    tar -xzf "$fd_tmp_dir/fd.tar.gz" -C "$fd_tmp_dir" &&
-    [ -x "$fd_tmp_dir/$fd_archive/fd" ] &&
-    as_root cp "$fd_tmp_dir/$fd_archive/fd" /usr/bin/fd &&
-    as_root chmod +x /usr/bin/fd; then
-    log "installed fd to /usr/bin/fd"
-  else
-    warn "failed to install fd from $fd_url"
-  fi
-
-  rm -rf "$fd_tmp_dir"
+  PACKAGE_MANAGER=pacman
+  # Never refresh Arch's database without upgrading installed packages.
+  as_root pacman -Syu --needed --noconfirm zsh git curl ca-certificates
 }
 
 install_openwrt() {
   if command -v apk >/dev/null 2>&1; then
-    log "installing base dependencies via apk"
+    PACKAGE_MANAGER=apk
     as_root apk update
-    as_root apk add --no-cache bash zsh git git-http curl lua5.4
+    as_root apk add --no-cache zsh git git-http curl ca-bundle
   elif command -v opkg >/dev/null 2>&1; then
-    log "installing base dependencies via opkg"
+    PACKAGE_MANAGER=opkg
     as_root opkg update
-    as_root opkg install bash zsh git git-http curl lua
+    as_root opkg install zsh git git-http curl ca-bundle
   else
     die "missing OpenWrt package manager: apk or opkg"
-  fi
-
-  if ! command -v fd >/dev/null 2>&1 && ! command -v fdfind >/dev/null 2>&1; then
-    install_openwrt_fd
   fi
 }
 
 install_base_deps() {
-  detect_os
+  [ "$OMZ_INSTALL_DEPS" = 1 ] || return 0
   case "$OS_ID" in
-    macos)
-      install_macos
-      ;;
-    debian|ubuntu|linuxmint|kali|raspbian)
-      install_debian_like
-      ;;
-    arch|manjaro|endeavouros)
-      install_arch_like
-      ;;
-    openwrt)
-      install_openwrt
-      ;;
+    macos) install_macos ;;
+    debian|ubuntu|linuxmint|kali|raspbian) install_debian_like ;;
+    arch|manjaro|endeavouros) install_arch_like ;;
+    openwrt) install_openwrt ;;
     *)
       case "$OS_LIKE" in
         *debian*) install_debian_like ;;
         *arch*) install_arch_like ;;
-        *)
-          warn "unsupported system: OS=$OS_NAME, ID=$OS_ID, ID_LIKE=$OS_LIKE"
-          warn "please install manually: bash zsh git curl lua fd/fdfind"
-          ;;
-      esac
-      ;;
+        *) warn "no package mapping for $OS_ID; using installed tools only" ;;
+      esac ;;
   esac
 }
 
-prepend_path() {
-  case ":$PATH:" in
-    *":$1:"*) ;;
-    *)
-      PATH="$1:$PATH"
-      export PATH
-      ;;
-  esac
+install_optional_package() {
+  optional_package="$1"
+  log "package manager: $optional_package"
+  case "$PACKAGE_MANAGER" in
+    brew) "$BREW_BIN" install "$optional_package" ;;
+    apt) as_root apt-get install -y "$optional_package" ;;
+    pacman) as_root pacman -S --needed --noconfirm "$optional_package" ;;
+    apk) as_root apk add --no-cache "$optional_package" ;;
+    opkg) as_root opkg install "$optional_package" ;;
+    *) return 0 ;;
+  esac || warn "package unavailable: $optional_package; keeping the documented runtime fallback"
 }
 
-add_fzf_path() {
-  if [ -d "$HOME/.fzf/bin" ]; then
-    prepend_path "$HOME/.fzf/bin"
-  fi
+read_install_options() {
+  # Share runtime option resolution, including local.zsh and legacy jump data.
+  # Use a separate file so personal configuration output cannot corrupt results.
+  OPTIONS_FILE="$(mktemp)"
+  zsh -dfc '
+    source "$1/omz.zsh" || exit
+    source "$1/lib/capabilities.zsh"
+    _omz_select_jump
+    print -r -- "$OMZ_PROFILE" > "$2"
+    if [[ $OMZ_JUMP == zlua ||
+          ( $OMZ_JUMP == auto && $_OMZ_JUMP_PENDING == true ) ]]; then
+      print -r -- lua >> "$2"
+    else
+      print -r -- none >> "$2"
+    fi
+  ' -- "$TARGET_DIR" "$OPTIONS_FILE"
+  INSTALL_PROFILE="$(sed -n '1p' "$OPTIONS_FILE")"
+  INSTALL_LUA="$(sed -n '2p' "$OPTIONS_FILE")"
+  rm -f "$OPTIONS_FILE"
+  OPTIONS_FILE=""
+  log "resolved profile: $INSTALL_PROFILE; Lua requirement: $INSTALL_LUA"
 }
 
-install_or_update_fzf() {
-  add_fzf_path
-
-  if [ -d "$HOME/.fzf/.git" ]; then
-    log "updating fzf"
-    git -C "$HOME/.fzf" pull --ff-only || warn "failed to update fzf, keep current version"
-  elif ! command -v fzf >/dev/null 2>&1; then
-    log "installing fzf from upstream"
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+install_profile_deps() {
+  [ "$OMZ_INSTALL_DEPS" = 1 ] || return 0
+  [ "$INSTALL_PROFILE" != minimal ] || return 0
+  fd_package=fd
+  lua_package=lua
+  if [ "$PACKAGE_MANAGER" = apt ]; then
+    fd_package=fd-find
+    lua_package=lua5.4
+  elif [ "$PACKAGE_MANAGER" = apk ]; then
+    lua_package=lua5.4
   fi
-
-  if [ -x "$HOME/.fzf/install" ]; then
-    "$HOME/.fzf/install" --all --no-bash --no-fish >/dev/null
+  install_optional_package "$fd_package"
+  install_optional_package fzf
+  install_optional_package zoxide
+  if [ "$INSTALL_PROFILE" = desktop ]; then
+    install_optional_package ouch
+    install_optional_package bat
+    install_optional_package eza
   fi
-
-  add_fzf_path
+  if [ "$INSTALL_LUA" = lua ]; then
+    install_optional_package "$lua_package"
+  fi
 }
 
 check_versions() {
+  [ "$INSTALL_PROFILE" != minimal ] || return 0
   if command -v fzf >/dev/null 2>&1; then
-    local fzf_ver
     fzf_ver="$(fzf --version | awk '{print $1}')"
     if ! version_ge "$fzf_ver" "$MIN_FZF_VERSION"; then
-      warn "fzf version is old: $fzf_ver (recommended >= $MIN_FZF_VERSION)"
+      warn "fzf $fzf_ver < $MIN_FZF_VERSION: native history/completion; upgrade with its package manager"
     fi
   else
-    warn "fzf not found"
+    warn "fzf not found: native history/completion"
   fi
+  for fd_bin in fd fdfind; do
+    if command -v "$fd_bin" >/dev/null 2>&1; then
+      fd_ver="$("$fd_bin" --version | awk '{print $2}')"
+      version_ge "$fd_ver" "$MIN_FD_VERSION" || warn "$fd_bin is older than $MIN_FD_VERSION"
+      break
+    fi
+  done
+}
 
-  if command -v fd >/dev/null 2>&1; then
-    local fd_ver
-    fd_ver="$(fd --version | awk '{print $2}')"
-    if ! version_ge "$fd_ver" "$MIN_FD_VERSION"; then
-      warn "fd version is old: $fd_ver (recommended >= $MIN_FD_VERSION)"
-    fi
-  elif command -v fdfind >/dev/null 2>&1; then
-    local fdfind_ver
-    fdfind_ver="$(fdfind --version | awk '{print $2}')"
-    if ! version_ge "$fdfind_ver" "$MIN_FD_VERSION"; then
-      warn "fdfind version is old: $fdfind_ver (recommended >= $MIN_FD_VERSION)"
-    fi
-  else
-    warn "fd/fdfind not found"
+check_repo_target() {
+  if [ -e "$TARGET_DIR/.git" ]; then
+    repo_status="$(git -C "$TARGET_DIR" status --porcelain --untracked-files=normal)" ||
+      die "cannot inspect Git checkout: $TARGET_DIR"
+    [ -z "$repo_status" ] ||
+      die "local changes in $TARGET_DIR; preserve them before updating"
+    remote="$(git -C "$TARGET_DIR" remote get-url origin)"
+    [ "${remote%.git}" = "${REPO_URL%.git}" ] ||
+      die "origin differs from REPO_URL in $TARGET_DIR; set REPO_URL to the existing origin"
+  elif [ -d "$TARGET_DIR" ]; then
+    [ -z "$(find "$TARGET_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ] ||
+      die "$TARGET_DIR exists but is not a git repo; move it away or set TARGET_DIR"
+  elif [ -e "$TARGET_DIR" ] || [ -L "$TARGET_DIR" ]; then
+    die "TARGET_DIR is not a directory: $TARGET_DIR"
   fi
 }
 
 install_repo() {
+  check_repo_target
   mkdir -p "$(dirname "$TARGET_DIR")"
-  if [ -d "$TARGET_DIR/.git" ]; then
+  if [ -e "$TARGET_DIR/.git" ]; then
     log "updating existing repo: $TARGET_DIR"
     git -C "$TARGET_DIR" pull --ff-only
-  elif [ -d "$TARGET_DIR" ]; then
-    if [ -z "$(find "$TARGET_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
-      log "cloning config to empty directory: $TARGET_DIR"
-      git clone "$REPO_URL" "$TARGET_DIR"
-    else
-      die "$TARGET_DIR exists but is not a git repo; move it away or set TARGET_DIR to another path"
-    fi
   else
     log "cloning config to $TARGET_DIR"
     git clone "$REPO_URL" "$TARGET_DIR"
   fi
+  [ -f "$TARGET_DIR/omz.zsh" ] &&
+    [ -f "$TARGET_DIR/scripts/manage-plugins.zsh" ] ||
+    die "target lacks the current omz entry point or plugin manager"
 }
 
 default_source_line() {
   if [ "$TARGET_DIR" = "$HOME/.config/zsh" ]; then
-    printf '%s\n' "source ~/.config/zsh/omz.zsh"
+    printf '%s\n' 'source ~/.config/zsh/omz.zsh'
   else
-    printf 'source "%s/omz.zsh"\n' "$(printf '%s' "$TARGET_DIR" | sed 's/["\`$\\]/\\&/g')"
+    printf 'source "%s/omz.zsh"\n' "$(printf '%s' "$TARGET_DIR" | sed 's/["`$\\]/\\&/g')"
   fi
 }
 
@@ -322,38 +277,71 @@ source_line() {
 
 ensure_source_line() {
   current_source_line="$(source_line)"
-  touch "$ZSHRC_FILE"
-  if ! grep -qxF "$current_source_line" "$ZSHRC_FILE"; then
-    log "adding source line to $ZSHRC_FILE"
-    printf "%s\n" "$current_source_line" >>"$ZSHRC_FILE"
-  else
+  if [ -f "$ZSHRC_FILE" ] && grep -qxF "$current_source_line" "$ZSHRC_FILE"; then
     log "source line already exists in $ZSHRC_FILE"
+    return 0
   fi
+  mkdir -p "$(dirname "$ZSHRC_FILE")"
+  if [ -e "$ZSHRC_FILE" ] || [ -L "$ZSHRC_FILE" ]; then
+    [ -f "$ZSHRC_FILE" ] || die "startup path is not a regular file: $ZSHRC_FILE"
+    backup="$(mktemp "$ZSHRC_FILE.omz-backup.XXXXXXXX")"
+    cp -p "$ZSHRC_FILE" "$backup"
+    chmod 600 "$backup"
+    log "startup backup: $backup"
+  fi
+  # Separate a pre-existing final line even when it lacks a trailing newline.
+  printf '\n%s\n' "$current_source_line" >> "$ZSHRC_FILE"
+  log "added source line to $ZSHRC_FILE"
 }
 
 print_next_steps() {
-  local zsh_path
-  zsh_path="$(command -v zsh || true)"
-  printf "\nDone.\n"
-  printf "1) Reload: source %s/omz.zsh\n" "$TARGET_DIR"
-  if [ -n "$zsh_path" ] && [ "${SHELL:-}" != "$zsh_path" ]; then
-    printf "2) Optional: chsh -s %s\n" "$zsh_path"
-  fi
+  printf '\nDone. Open a new Zsh after closing old sessions and reviewing migration.\n'
+  printf 'Configuration: %s\nProfile used for installation: %s\n' "$TARGET_DIR" "$INSTALL_PROFILE"
+  printf '%s\n' 'Persist profile/backend overrides in your XDG omz/local.zsh.'
+  printf 'State preview: zsh -df "%s/scripts/migrate-state.zsh"\n' "$TARGET_DIR"
+  printf 'Jump preview:  zsh -df "%s/scripts/migrate-jump.zsh"\n' "$TARGET_DIR"
+  printf 'Diagnostics:   zsh -df "%s/scripts/doctor.zsh"\n' "$TARGET_DIR"
 }
 
 main() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --help|-h) usage; return 0 ;;
+      --migrate-state-preview) MIGRATION_PREVIEW=1 ;;
+      *) die "unknown option: $1 (see --help)" ;;
+    esac
+    shift
+  done
+  case "$OMZ_INSTALL_DEPS" in 0|1) ;; *) die "OMZ_INSTALL_DEPS must be 0 or 1" ;; esac
+  case "$TARGET_DIR" in /*) ;; *) die "TARGET_DIR must be absolute" ;; esac
+  case "$ZSHRC_FILE" in /*) ;; *) die "ZSHRC_FILE must be absolute" ;; esac
+  # Refuse a dirty installation before changing any packages.
+  if [ -e "$TARGET_DIR" ] || [ -L "$TARGET_DIR" ]; then
+    need_cmd git
+    check_repo_target
+  fi
+  trap '[ -z "$OPTIONS_FILE" ] || rm -f "$OPTIONS_FILE"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' HUP TERM
+  detect_os
   install_base_deps
   need_cmd zsh
   need_cmd git
   need_cmd curl
-  need_lua
-  install_or_update_fzf
   install_repo
-  ensure_source_line
+  read_install_options
+  install_profile_deps
   check_versions
+  zsh -df "$TARGET_DIR/scripts/manage-plugins.zsh" install
+  zsh -df "$TARGET_DIR/scripts/manage-plugins.zsh" verify
+  if [ "$MIGRATION_PREVIEW" = 1 ]; then
+    zsh -df "$TARGET_DIR/scripts/migrate-state.zsh"
+  fi
+  # Append the startup entry only after preparation and verification succeeded.
+  ensure_source_line
   print_next_steps
 }
 
-if [ "${OMZ_INSTALLER_SKIP_MAIN:-0}" != "1" ]; then
+if [ "${OMZ_INSTALLER_SKIP_MAIN:-0}" != 1 ]; then
   main "$@"
 fi

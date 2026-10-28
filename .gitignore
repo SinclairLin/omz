@@ -1,6 +1,7 @@
 cache/*
-!cache/holder
 config/env-self.zsh
+__pycache__/
+*.py[cod]
 
 # System files
 .DS_Store

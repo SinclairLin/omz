@@ -1,5 +1,10 @@
 export RUNEWIDTH_EASTASIAN=0
-export FZF_DEFAULT_OPTS="--height 12 --scrollbar=▌▐ --info=inline-right --layout=reverse --history=$OMZ/cache/fzfhistory"
+export FZF_DEFAULT_OPTS="--height 12 --scrollbar=▌▐ --info=inline-right --layout=reverse ${FZF_DEFAULT_OPTS:-}"
+export FZF_CTRL_R_OPTS="--history=${(q)OMZ_STATE_DIR}/fzf_query_history ${FZF_CTRL_R_OPTS:-}"
+if [[ -d "$OMZ_STATE_DIR" ]]; then
+    (umask 077; touch -- "$OMZ_STATE_DIR/fzf_query_history")
+    chmod 600 "$OMZ_STATE_DIR/fzf_query_history"
+fi
 
 if command -v fd >/dev/null 2>&1; then
     _OMZ_FD_BIN="fd"
@@ -16,9 +21,6 @@ else
 fi
 
 unset _OMZ_FD_BIN
-# export FZF_PREVIEW_COMMAND='bash $OMZ/lib/file_preview.sh {}'
-export FZF_COMPLETION_TRIGGER='\'
-export FZF_PREVIEW_COMMAND='[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (ccat --color=always {} || highlight -O ansi -l {} || cat {}) 2> /dev/null | head -500'
 
 zstyle ':completion:complete:*:options' sort false
 zstyle ':fzf-tab:complete:_zlua:*' query-string input
@@ -42,19 +44,5 @@ zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview 'git diff --colo
 zstyle ':fzf-tab:complete:git-log:*' fzf-preview 'git log --color=always $word'
 zstyle ':fzf-tab:complete:git-show:*' fzf-preview 'git show --color=always $word'
 zstyle ':fzf-tab:complete:git-checkout:*' fzf-preview '[ -f "$realpath" ] && git diff --color=always $word || git log --color=always $word'
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'bash $OMZ/lib/file_preview.sh ${(Q)realpath}'
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'sh "$OMZ/lib/file_preview.sh" "$realpath"'
 zstyle ':fzf-tab:complete:*:*' fzf-flags --height=12
-
-_apply_historybyfzf() {
-    function historybyfzf (){
-        if [ $#LBUFFER -gt 0 ]; then
-            BUFFER=$(history -n | awk '!seen [$0]++' | fzf --query $LBUFFER)
-        else
-            BUFFER=$(history -n | awk '!seen [$0]++' | fzf)
-        fi
-        CURSOR=$#BUFFER
-        zle redisplay
-    }
-    zle -N historybyfzf
-    bindkey '^r' historybyfzf
-}

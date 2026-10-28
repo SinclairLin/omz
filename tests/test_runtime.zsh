@@ -9,6 +9,15 @@ fail() {
   exit 1
 }
 
+export HOME="$TEST_TMP/home"
+export ZDOTDIR="$TEST_TMP/zdot"
+export XDG_CONFIG_HOME="$TEST_TMP/config"
+export XDG_STATE_HOME="$TEST_TMP/state"
+export XDG_DATA_HOME="$TEST_TMP/data"
+export XDG_CACHE_HOME="$TEST_TMP/cache"
+export OMZ_STATE_DIR="$XDG_STATE_HOME/omz"
+mkdir -p "$HOME" "$ZDOTDIR" "$OMZ_STATE_DIR"
+
 EDITOR=/custom/editor
 source "$ROOT_DIR/config/env.zsh"
 [[ "$EDITOR" == /custom/editor ]] || fail "config/env.zsh overwrote EDITOR"
@@ -31,7 +40,7 @@ source "$ROOT_DIR/config/fzf.zsh"
 zstyle -s ':fzf-tab:complete:kill:argument-rest' fzf-preview process_preview
 [[ "$process_preview" == *'ps --pid="$word"'* ]] || fail "Linux process preview lost GNU ps support"
 
-source "$ROOT_DIR/plugins/randport/randport.plugin.zsh"
+source "$ROOT_DIR/functions/randport.zsh"
 typeset -gi first_checked_port=0
 _omz_port_in_use() {
   if (( first_checked_port == 0 )); then
@@ -54,30 +63,21 @@ if randport >/dev/null 2>&1; then
   fail "randport should fail without a port inspection tool"
 fi
 
-mkdir -p "$TEST_TMP/home" "$TEST_TMP/zdot"
-runtime_path="$PATH"
-lua_found=false
-for lua_bin in lua luajit lua5.4 lua5.3 lua5.2 lua5.1; do
-  if (( $+commands[$lua_bin] )); then
-    lua_found=true
-    break
-  fi
-done
-
-if [[ "$lua_found" == false ]]; then
-  mkdir -p "$TEST_TMP/bin"
-  cat >"$TEST_TMP/bin/lua" <<'EOF'
-#!/usr/bin/env sh
-exit 0
-EOF
-  chmod +x "$TEST_TMP/bin/lua"
-  runtime_path="$TEST_TMP/bin:$runtime_path"
-fi
-
 HOME="$TEST_TMP/home" \
 ZDOTDIR="$TEST_TMP/zdot" \
-PATH="$runtime_path" \
 TERM=xterm-256color \
-zsh -dfc "source '$ROOT_DIR/omz.zsh'; whence -w randport >/dev/null"
+zsh -dfc 'source "$1/omz.zsh"; (( ! $+functions[randport] && ! $+functions[compdef] ))' -- "$ROOT_DIR" ||
+  fail "noninteractive startup loaded interactive functions"
+
+if [[ -z "${OMZ_TEST_PLUGIN_DATA:-}" ]]; then
+  OMZ_PROFILE=desktop OMZ_JUMP=zlua zsh -df "$ROOT_DIR/scripts/manage-plugins.zsh" install ||
+    fail "plugin test dependency installation failed"
+  export OMZ_TEST_PLUGIN_DATA="$XDG_DATA_HOME/omz"
+fi
+python3 "$ROOT_DIR/tests/test_plugins.py" || fail "plugin tests failed"
+python3 "$ROOT_DIR/tests/test_initialization.py" || fail "initialization tests failed"
+python3 "$ROOT_DIR/tests/test_migration.py" || fail "migration tests failed"
+python3 "$ROOT_DIR/tests/test_interaction.py" || fail "interaction tests failed"
+python3 "$ROOT_DIR/tests/test_tools.py" || fail "M4 tool tests failed"
 
 print 'runtime tests passed'

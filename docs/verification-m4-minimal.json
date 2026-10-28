@@ -1,0 +1,520 @@
+{
+  "collected_at": "2026-10-28T00:25:29.483955+08:00",
+  "head": "358bbd69e2ba81563401678f86df045b966d8e44",
+  "branch": "main",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "architecture": "arm64",
+  "python": "3.9.6",
+  "path": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/linzx6/.grok/bin:/Users/linzx6/.local/state/fnm_multishells/45343_1793117421701/bin:/opt/homebrew/sbin:/opt/homebrew/bin:/Users/linzx6/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Users/linzx6/.codex/tmp/arg0-macos/codex-arg0OzpwrG:/Users/linzx6/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/linzx6/.local/state/fnm_multishells/31717_1793038574251/bin:/Users/linzx6/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS",
+  "tools": {
+    "zsh": {
+      "path": "/bin/zsh",
+      "version": "zsh 5.9 (arm64-apple-darwin26.0)"
+    },
+    "bash": {
+      "path": "/bin/bash",
+      "version": "GNU bash, version 3.2.57(1)-release (arm64-apple-darwin26)"
+    },
+    "git": {
+      "path": "/usr/bin/git",
+      "version": "git version 2.54.0 (Apple Git-157)"
+    },
+    "fzf": {
+      "path": "/opt/homebrew/bin/fzf",
+      "version": "0.74.5 (Homebrew)"
+    },
+    "fd": {
+      "path": "/opt/homebrew/bin/fd",
+      "version": "fd 10.5.0"
+    },
+    "fdfind": null,
+    "lua": {
+      "path": "/opt/homebrew/bin/lua",
+      "version": "Lua 5.5.1  Copyright (C) 1994-2026 Lua.org, PUC-Rio"
+    },
+    "luajit": null,
+    "lua5.4": null,
+    "lua5.3": null,
+    "zoxide": {
+      "path": "/opt/homebrew/bin/zoxide",
+      "version": "zoxide 0.10.0"
+    },
+    "ouch": {
+      "path": "/opt/homebrew/bin/ouch",
+      "version": "ouch 0.8.3"
+    },
+    "bat": {
+      "path": "/opt/homebrew/bin/bat",
+      "version": "bat 0.26.1"
+    },
+    "batcat": null,
+    "eza": {
+      "path": "/opt/homebrew/bin/eza",
+      "version": "eza eza - A modern, maintained replacement for ls"
+    },
+    "shellcheck": {
+      "path": "/opt/homebrew/bin/shellcheck",
+      "version": "ShellCheck - shell script analysis tool"
+    }
+  },
+  "method": "Isolated repository copy, HOME/XDG; zsh -dfi -c; no PTY.",
+  "requested_profile": "minimal",
+  "embedded": {},
+  "plugin_manifest": "# Antidote native manifest, in widget wrapping order.\n# fzf-tab v1.3.0, autosuggestions v0.7.1, syntax-highlighting 0.8.0.\nAloxaf/fzf-tab pin:d7e0234614dbe5369fdd760907d12c0e05a4dccc\nzsh-users/zsh-autosuggestions pin:e52ee8ca55bcc56a17c828767a3f98f22a68d4eb\nzsh-users/zsh-syntax-highlighting pin:db085e4661f6aafd24e5acb5b2e17e4dd5dddf3e\n# z.lua 1.8.25 compatibility backend; initialization belongs to config/jump.zsh.\nskywind3000/z.lua pin:86a9fc5b308b66197720811d295e3812b1c73325 kind:clone\n",
+  "plugin_bootstrap": "# Antidote v2.3.0. Only manage-plugins.zsh installs or executes it.\ntypeset -gr OMZ_ANTIDOTE_URL=https://github.com/mattmc3/antidote.git\ntypeset -gr OMZ_ANTIDOTE_SHA=9bb69ab99c6f05d6e6ae237f7ce222eeeb5b4a14\n",
+  "plugin_setup": "omz: build complete: <TEMP>/home/.cache/omz/plugins.zsh (minimal, 0 plugins).",
+  "plugin_verification": "omz: verified minimal (0 plugins), Antidote 9bb69ab99c6f05d6e6ae237f7ce222eeeb5b4a14.",
+  "checks": [
+    {
+      "command": [
+        "sh",
+        "-n",
+        "scripts/install_zsh_config.sh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/install_zsh_config.sh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "tests/test_installer.sh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "lib/file_preview.sh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "omz.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "lib/init.sh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/aliases.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/bootstrap.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/completion.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/defaults.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/env.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/fzf-history.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/fzf.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/git.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/history.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/hook.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/jump.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "config/keybindings.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "functions/docker.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "functions/extract.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "functions/randport.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "lib/capabilities.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "lib/git-prompt.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "lib/paths.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "lib/plugins.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "scripts/doctor.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "scripts/manage-plugins.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "scripts/migrate-jump.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "scripts/migrate-state.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "tests/test_runtime.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-n",
+        "themes/simple.zsh-theme"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "tests/test_installer.sh"
+      ],
+      "returncode": 0,
+      "stdout": "[install] installing macOS dependencies via Homebrew\n[install] adding source line to /var/folders/lg/t52c4hjx74d4lt45ks4hrp2h0000gn/T/tmp.LyLNEOeJQN/.zshrc\n[install] source line already exists in /var/folders/lg/t52c4hjx74d4lt45ks4hrp2h0000gn/T/tmp.LyLNEOeJQN/.zshrc\n[install] adding source line to /var/folders/lg/t52c4hjx74d4lt45ks4hrp2h0000gn/T/tmp.LyLNEOeJQN/custom.zshrc\n[install] installing base dependencies via apk\n[install] cloning config to empty directory: /var/folders/lg/t52c4hjx74d4lt45ks4hrp2h0000gn/T/tmp.LyLNEOeJQN/empty-target\ninstaller tests passed\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "zsh",
+        "-df",
+        "tests/test_runtime.zsh"
+      ],
+      "returncode": 0,
+      "stdout": "runtime tests passed\n",
+      "stderr": "..............\n----------------------------------------------------------------------\nRan 14 tests in 9.028s\n\nOK\n.............\n----------------------------------------------------------------------\nRan 13 tests in 5.073s\n\nOK\n............\n----------------------------------------------------------------------\nRan 12 tests in 1.488s\n\nOK\n..............\n----------------------------------------------------------------------\nRan 14 tests in 9.086s\n\nOK\n...................\n----------------------------------------------------------------------\nRan 19 tests in 2.541s\n\nOK\n"
+    }
+  ],
+  "startup": {
+    "first_without_compdump_ms": 141.592,
+    "warm": {
+      "samples_ms": [
+        32.716,
+        32.5,
+        32.104,
+        32.062,
+        32.077,
+        32.211,
+        32.848,
+        31.841,
+        31.769,
+        33.13,
+        31.577,
+        34.78,
+        35.374,
+        38.11,
+        36.316,
+        32.258,
+        32.737,
+        31.629,
+        31.877,
+        31.791
+      ],
+      "median_ms": 32.234,
+      "p95_ms": 36.316
+    },
+    "note": "Process wall time including exit; OS filesystem caches not flushed."
+  },
+  "probes": {
+    "noninteractive": {
+      "returncode": 0,
+      "stdout": "interactive=off\ndirectory_unchanged=true\nhistory=\ncompletion=0\nhistory_widget=0\nsuggestions=0\nhighlighting=0\njump_backend=none\njump=0\nextract=0\nrandport=0\ndcupdate=0\n\"^I\" expand-or-complete\n\"^R\" redisplay\nhooks_before=0,0,0\nwidgets_before=386\nhooks_after=0,0,0\nwidgets_after=386\n\"^I\" expand-or-complete\n\"^R\" redisplay\n",
+      "stderr": ""
+    },
+    "interactive": {
+      "returncode": 0,
+      "stdout": "interactive=on\ndirectory_unchanged=true\nhistory=<TEMP>/home/.local/state/omz/zsh_history\ncompletion=1\nhistory_widget=0\nsuggestions=0\nhighlighting=0\njump_backend=none\njump=0\nextract=1\nrandport=1\ndcupdate=1\n\"^I\" expand-or-complete\n\"^R\" history-incremental-search-backward\nhooks_before=1,0,0\nwidgets_before=408\nhooks_after=1,0,0\nwidgets_after=408\n\"^I\" expand-or-complete\n\"^R\" history-incremental-search-backward\n",
+      "stderr": ""
+    }
+  },
+  "prompt": {
+    "ordinary": {
+      "samples_ms": [
+        16.262,
+        16.253,
+        16.83,
+        15.753,
+        16.554,
+        15.894,
+        16.666,
+        16.473,
+        16.507,
+        15.701,
+        16.113,
+        16.256,
+        17.007,
+        16.284,
+        16.541,
+        16.029,
+        15.984,
+        16.442,
+        16.259,
+        16.171
+      ],
+      "median_ms": 16.26,
+      "p95_ms": 16.83
+    },
+    "git_10000_clean": {
+      "samples_ms": [
+        31.254,
+        29.431,
+        29.185,
+        28.858,
+        29.068,
+        29.252,
+        28.465,
+        29.205,
+        28.323,
+        28.604,
+        28.315,
+        28.852,
+        28.792,
+        27.723,
+        28.512,
+        32.919,
+        33.294,
+        31.979,
+        35.038,
+        33.669
+      ],
+      "median_ms": 29.127,
+      "p95_ms": 33.669
+    },
+    "git_10000_dirty": {
+      "samples_ms": [
+        36.102,
+        34.693,
+        35.757,
+        35.428,
+        33.711,
+        29.359,
+        29.458,
+        29.638,
+        31.929,
+        34.841,
+        34.7,
+        35.28,
+        35.863,
+        35.024,
+        35.552,
+        37.072,
+        35.698,
+        34.496,
+        34.422,
+        33.969
+      ],
+      "median_ms": 34.77,
+      "p95_ms": 36.102
+    }
+  }
+}

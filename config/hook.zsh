@@ -29,9 +29,16 @@ _apply_precmd_title_hook() {
 
 # auto to last pwd
 _apply_chpwd_hook() {
-    chpwd_hook() { echo $PWD > $OMZ/cache/currentdir }
+    chpwd_hook() {
+        (umask 077; print -r -- "$PWD" >| "$OMZ_STATE_DIR/last_directory")
+        chmod 600 "$OMZ_STATE_DIR/last_directory"
+    }
     add-zsh-hook -Uz chpwd chpwd_hook
-    currentdir=$(cat $OMZ/cache/currentdir 2>/dev/null)
-    [ -d "$currentdir" ] && cd $currentdir
+    local currentdir
+    if [[ -r "$OMZ_STATE_DIR/last_directory" ]]; then
+        currentdir=$(<"$OMZ_STATE_DIR/last_directory")
+        [[ -d "$currentdir" ]] && builtin cd -- "$currentdir"
+    fi
+    return 0
 }
 

@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-10-28T00:30:17.254871+08:00",
+  "checks": [
+    {
+      "name": "real bat text",
+      "returncode": 0,
+      "output_lines": 1000,
+      "expected_max_lines": 1000,
+      "stderr": ""
+    },
+    {
+      "name": "real eza directory",
+      "returncode": 0,
+      "output_lines": 200,
+      "expected_max_lines": 200,
+      "stderr": ""
+    },
+    {
+      "name": "POSIX syntax",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "name": "ShellCheck",
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  ]
+}

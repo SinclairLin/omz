@@ -1,4 +1,4 @@
-alias tree='tree --dirsfirst -F'
+(( ! $+commands[tree] )) || alias tree='tree --dirsfirst -F'
 alias c=clear
 alias lsa='ls -lah'
 alias l='ls -lah'
@@ -10,7 +10,7 @@ if command -v nvim >/dev/null 2>&1; then
   alias vim='nvim'
   alias vi='nvim'
 fi
-alias lg=lazygit
+(( ! $+commands[lazygit] )) || alias lg=lazygit
 # alias rr=ranger
 
 # kitty ssh

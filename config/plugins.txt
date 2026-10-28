@@ -1,0 +1,7 @@
+# Antidote native manifest, in widget wrapping order.
+# fzf-tab v1.3.0, autosuggestions v0.7.1, syntax-highlighting 0.8.0.
+Aloxaf/fzf-tab pin:d7e0234614dbe5369fdd760907d12c0e05a4dccc
+zsh-users/zsh-autosuggestions pin:e52ee8ca55bcc56a17c828767a3f98f22a68d4eb
+zsh-users/zsh-syntax-highlighting pin:db085e4661f6aafd24e5acb5b2e17e4dd5dddf3e
+# z.lua 1.8.25 compatibility backend; initialization belongs to config/jump.zsh.
+skywind3000/z.lua pin:86a9fc5b308b66197720811d295e3812b1c73325 kind:clone

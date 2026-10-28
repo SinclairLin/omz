@@ -25,11 +25,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y zsh lua5.4 fd-find fzf lsof
+          sudo apt-get install -y zsh lua5.4 fd-find fzf lsof zoxide bat shellcheck
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install lua fd fzf
+        run: brew install lua fd fzf zoxide ouch bat eza shellcheck
 
       - name: Check installed dependencies
         run: |
@@ -40,14 +40,23 @@ jobs:
 
       - name: Check shell syntax
         run: |
-          bash -n scripts/install_zsh_config.sh lib/*.sh tests/test_installer.sh
-          zsh -n omz.zsh config/*.zsh themes/*.zsh-theme \
-            plugins/docker-tools/docker-tools.zsh \
-            plugins/randport/randport.plugin.zsh \
-            tests/test_runtime.zsh
+          /bin/sh -n scripts/install_zsh_config.sh
+          /bin/sh -n lib/file_preview.sh
+          for file in lib/file_preview.sh tests/test_installer.sh; do
+            bash -n "$file"
+          done
+          for file in omz.zsh lib/init.sh lib/*.zsh config/*.zsh themes/*.zsh-theme \
+            scripts/*.zsh \
+            functions/*.zsh \
+            tests/test_runtime.zsh; do
+            zsh -n "$file"
+          done
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck -s sh scripts/install_zsh_config.sh lib/file_preview.sh
+          fi
 
-      - name: Test installer behavior
-        run: bash tests/test_installer.sh
+      - name: Test installer packages and isolated install/upgrade for all profiles
+        run: PYTHONDONTWRITEBYTECODE=1 bash tests/test_installer.sh
 
       - name: Test runtime behavior
         run: zsh tests/test_runtime.zsh
