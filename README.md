@@ -20,7 +20,7 @@ On macOS, install [Homebrew](https://brew.sh/) and Apple's Command Line Tools fi
 
 Lua is requested only for an explicit z.lua backend or a pending legacy database under `OMZ_JUMP=auto`. Missing optional packages produce warnings and use the runtime fallbacks. fzf 0.51.0+ enables enhanced history/completion; older versions retain native behavior. No Rust builds, upstream binary downloads, global fd symlinks, or `~/.fzf` updates are performed. Existing binaries remain usable through your PATH. Python 3 is needed for explicit migrations and development checks, not everyday startup.
 
-For a persistent profile/backend choice, put it in `${XDG_CONFIG_HOME:-$HOME/.config}/omz/local.zsh` before installing. Preserve existing content; for example, add `OMZ_PROFILE=minimal` or `OMZ_JUMP=zlua`. This file takes precedence over the legacy `config/env-self.zsh`. Environment overrides such as `OMZ_PROFILE=minimal` affect that invocation only and are not saved by the installer.
+For a persistent profile/backend choice, put it in `${XDG_CONFIG_HOME:-$HOME/.config}/omz/local.zsh` before installing. Preserve existing content; for example, add `OMZ_PROFILE=minimal` or `OMZ_JUMP=zlua`. This file takes precedence over the legacy `config/env-self.zsh`. It is read before history, key bindings and aliases, so overrides of those (`HISTSIZE`, `alias`, `bindkey`, `setopt`) belong in `omz/post.zsh` in the same directory, which runs after project setup and before the widget plugins. Environment overrides such as `OMZ_PROFILE=minimal` affect that invocation only and are not saved by the installer.
 
 ### Manual Packages And Installation
 

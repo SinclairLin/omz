@@ -19,9 +19,19 @@ _omz_select_jump() {
   [[ $OMZ_PROFILE != minimal && $OMZ_JUMP != none ]] || return 0
   local executable source=${_ZL_DATA:-$HOME/.zlua} decision=''
   if [[ -n ${ZLUA_EXEC:-} ]]; then
-    executable=$(command -v -- "$ZLUA_EXEC")
-    [[ -n $executable && -x $executable ]] && _OMZ_LUA=$executable
-  else
+    # No command substitution: a miss must not trip err_exit in tools.
+    if [[ $ZLUA_EXEC == */* ]]; then
+      executable=${ZLUA_EXEC:a}
+    else
+      executable=${commands[$ZLUA_EXEC]:-}
+    fi
+    if [[ -n $executable && -f $executable && -x $executable ]]; then
+      _OMZ_LUA=$executable
+    else
+      print -u2 -- "omz: ZLUA_EXEC=$ZLUA_EXEC not found; searching for Lua."
+    fi
+  fi
+  if [[ -z $_OMZ_LUA ]]; then
     for executable in lua luajit lua5.4 lua5.3 lua5.2 lua5.1; do
       if (( $+commands[$executable] )); then
         _OMZ_LUA=$commands[$executable]

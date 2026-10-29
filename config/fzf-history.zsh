@@ -22,7 +22,12 @@ _omz_init_fzf_history() {
     print -u2 -- "omz: fzf --zsh failed; using native Ctrl-R."
     return 0
   }
-  # Use upstream history handling; keep project completion and other key bindings.
+  # The output concatenates key-bindings.zsh and completion.zsh; keep only the former.
+  if [[ $integration == *$'\n### end: key-bindings.zsh ###'* ]]; then
+    eval "${integration%%$'\n### end: key-bindings.zsh ###'*}"
+    return
+  fi
+  # Unknown layout: use all of it, then restore the project Tab entry.
   tab_binding=$(bindkey '^I')
   eval "$integration"
   bindkey '^I' "${tab_binding##* }"

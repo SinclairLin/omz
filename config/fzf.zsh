@@ -1,10 +1,7 @@
 export RUNEWIDTH_EASTASIAN=0
 export FZF_DEFAULT_OPTS="--height 12 --scrollbar=▌▐ --info=inline-right --layout=reverse ${FZF_DEFAULT_OPTS:-}"
 export FZF_CTRL_R_OPTS="--history=${(q)OMZ_STATE_DIR}/fzf_query_history ${FZF_CTRL_R_OPTS:-}"
-if [[ -d "$OMZ_STATE_DIR" ]]; then
-    (umask 077; touch -- "$OMZ_STATE_DIR/fzf_query_history")
-    chmod 600 "$OMZ_STATE_DIR/fzf_query_history"
-fi
+[[ ! -d "$OMZ_STATE_DIR" ]] || _omz_private_file "$OMZ_STATE_DIR/fzf_query_history"
 
 if command -v fd >/dev/null 2>&1; then
     _OMZ_FD_BIN="fd"

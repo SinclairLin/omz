@@ -5,15 +5,7 @@ setopt pipe_fail
 umask 077
 
 export OMZ=${0:A:h:h}
-source "$OMZ/lib/paths.zsh"
-source "$OMZ/config/defaults.zsh"
-source "$OMZ/config/env.zsh"
-if [[ -f "$OMZ_CONFIG_DIR/local.zsh" ]]; then
-  source "$OMZ_CONFIG_DIR/local.zsh"
-elif [[ -f "$OMZ/config/env-self.zsh" ]]; then
-  source "$OMZ/config/env-self.zsh"
-fi
-_omz_resolve_options
+source "$OMZ/lib/config.zsh"
 # Personal shell configuration may contain optional probes returning nonzero.
 setopt err_exit
 source "$OMZ/config/bootstrap.zsh"
@@ -139,20 +131,28 @@ temporary=$(mktemp "$OMZ_CACHE_DIR/.plugins.XXXXXXXX")
 _omz_plugin_signature > "$temporary"
 if (( $#_OMZ_PLUGIN_REPOS )); then
   # Guard every entry before sourcing any plugin, so missing files degrade as a unit.
-  for repo in "${_OMZ_PLUGIN_REPOS[@]}"; do
+  # z.lua is a clone that jump.zsh checks; keeping it out keeps the file backend-neutral.
+  for repo in "${(@)_OMZ_PLUGIN_REPOS:#skywind3000/z.lua}"; do
     directory="$ANTIDOTE_HOME/github.com/$repo"
-    if [[ $repo == skywind3000/z.lua ]]; then
-      print -r -- "[[ -r ${(q)directory}/z.lua ]] || return 1" >> "$temporary"
-    else
-      print -r -- "[[ -r ${(q)directory}/${repo:t}.plugin.zsh && -r ${(q)directory}/${repo:t}.zsh ]] || return 1" >> "$temporary"
-    fi
+    print -r -- "[[ -r ${(q)directory}/${repo:t}.plugin.zsh && -r ${(q)directory}/${repo:t}.zsh ]] || return 1" >> "$temporary"
   done
   source "$antidote_dir/antidote.zsh"
   zstyle ':antidote:bundle' path-style full
   zstyle ':antidote:bundle:*' shallow yes
   zstyle ':antidote:*' zcompile no
   # Antidote owns cloning, pin checkout, and static source generation.
-  print -rl -- "${_OMZ_PLUGIN_LINES[@]}" | antidote bundle >> "$temporary"
+  for line in "${_OMZ_PLUGIN_LINES[@]}"; do
+    if [[ ${line%% *} == skywind3000/z.lua ]]; then
+      print -r -- "$line" | antidote bundle >/dev/null
+    elif [[ ${line%% *} == Aloxaf/fzf-tab ]]; then
+      # fzf can be installed or removed after the build; check when sourcing.
+      print -r -- 'if _omz_fzf_available && (( $+functions[compdef] )); then' >> "$temporary"
+      print -r -- "$line" | antidote bundle >> "$temporary"
+      print -r -- 'fi' >> "$temporary"
+    else
+      print -r -- "$line" | antidote bundle >> "$temporary"
+    fi
+  done
   verify_dependencies
 fi
 print -r -- 'return 0' >> "$temporary"

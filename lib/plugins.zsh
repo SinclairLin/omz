@@ -1,10 +1,11 @@
 # Keep startup independent of Antidote, Git, and network access.
+# The signature avoids PATH probes, so a build from `zsh -df` matches later shells:
+# fzf-tab is checked when sourcing, and z.lua (a clone that jump.zsh checks) is excluded.
 _omz_select_plugins() {
   emulate -L zsh
   setopt extendedglob
   typeset -ga _OMZ_PLUGIN_LINES=() _OMZ_PLUGIN_REPOS=() _OMZ_PLUGIN_SHAS=()
   local line repo sha
-  _omz_select_jump
   local -a fields seen
   while IFS= read -r line || [[ -n "$line" ]]; do
     line=${line%%\#*}
@@ -30,8 +31,10 @@ _omz_select_plugins() {
     seen+=("$repo")
     [[ "$OMZ_PROFILE" != minimal ]] || continue
     _omz_plugin_enabled "${repo:t}" || continue
-    [[ "$repo" != Aloxaf/fzf-tab ]] || _omz_fzf_available || continue
-    [[ "$repo" != skywind3000/z.lua || $_OMZ_JUMP_BACKEND == zlua ]] || continue
+    if [[ "$repo" == skywind3000/z.lua ]]; then
+      [[ -n ${_OMZ_JUMP_BACKEND:-} ]] || _omz_select_jump
+      [[ $_OMZ_JUMP_BACKEND == zlua ]] || continue
+    fi
     _OMZ_PLUGIN_LINES+=("${(j: :)fields}")
     _OMZ_PLUGIN_REPOS+=("$repo")
     _OMZ_PLUGIN_SHAS+=("$sha")
@@ -41,9 +44,9 @@ _omz_select_plugins() {
 _omz_plugin_signature() {
   emulate -L zsh
   local -a identity=(
-    v1 "$OMZ" "$OMZ_DATA_DIR" "$OMZ_CACHE_DIR" "$OMZ_PROFILE"
+    v2 "$OMZ" "$OMZ_DATA_DIR" "$OMZ_CACHE_DIR" "$OMZ_PROFILE"
     "$(<"$OMZ/config/bootstrap.zsh")" "$(<"$OMZ/config/plugins.txt")"
-    "${_OMZ_PLUGIN_LINES[@]}"
+    "${(@)_OMZ_PLUGIN_LINES:#skywind3000/z.lua *}"
   )
   # One literal line, including when a path or manifest contains newlines.
   print -r -- "# omz-static ${(j: :)${(@qqqq)identity}}"
@@ -55,7 +58,7 @@ _omz_plugin_hint() {
 
 _omz_load_plugins() {
   _omz_select_plugins || return 0
-  (( $#_OMZ_PLUGIN_REPOS )) || return 0
+  (( ${#${(@)_OMZ_PLUGIN_REPOS:#skywind3000/z.lua}} )) || return 0
   local file="$OMZ_CACHE_DIR/plugins.zsh" header
   if [[ -r "$file" ]] &&
      IFS= read -r header < "$file" &&

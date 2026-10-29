@@ -20,7 +20,7 @@ M3 本机二进制验收版本为 Homebrew zoxide 0.10.0 与 fzf 0.74.5。它们
 
 M4 将 extract 替换为调用 ouch 的项目函数，将 randport 和 docker-tools 移至 `functions/`，删除旧插件目录和自管图片脚本。本机二进制验收版本为 Homebrew ouch 0.8.3（MIT）、bat 0.26.1（MIT 或 Apache-2.0）、eza 0.23.5（EUPL-1.2）、fzf 0.74.5（MIT）；许可证按本机 Homebrew 元数据核对。它们仍归包管理器维护，不复制其源码或预览脚本。开发验证使用 ShellCheck 0.11.0（GPL-3.0-or-later）。
 
-解压适配以已安装 `ouch decompress --help`、`ouch --help` 和 0.8.3 上游仓库为依据：`https://github.com/ouch-org/ouch/tree/0.8.3`。RAR3/RAR5 使用该标签对应提交 `433c05d21ffd3a59a213930e256ce4b4ad863d79` 的 `tests/data/testfile.rar3.rar.gz`、`testfile.rar5.rar` 临时样本；文件随临时目录清理，来源和哈希见 `verification-m4-formats.json`。
+解压适配以已安装 `ouch decompress --help`、`ouch --help` 和 0.8.3 上游仓库为依据：`https://github.com/ouch-org/ouch/tree/0.8.3`。RAR3/RAR5 使用该标签对应提交 `433c05d21ffd3a59a213930e256ce4b4ad863d79` 的 `tests/data/testfile.rar3.rar.gz`、`testfile.rar5.rar` 临时样本；文件随临时目录清理，来源和哈希保存在本地生成的 `verification-m4-formats.json`（已忽略，不随仓库分发）。
 
 图片预览调用所选 fzf 包的 `bin/fzf-preview.sh` 等官方安装位置；本机读取 `/opt/homebrew/Cellar/fzf/0.74.5/bin/fzf-preview.sh`，未修改或复制该脚本。终端协议与清理行为由 fzf 和官方脚本负责，本项目只做路径、能力判断及元数据降级。
 

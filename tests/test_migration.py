@@ -87,13 +87,65 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(len(list((self.state / "backups").iterdir())), 1)
         self.assertEqual((self.state / "zsh_history").stat().st_mode & 0o777, 0o600)
 
-    def test_nonempty_target_stops_all_copies(self):
-        self.state.mkdir(parents=True)
-        (self.state / "zsh_history").write_bytes(b"existing target\n")
-        self.apply(expected=1)
-        self.assertEqual((self.state / "zsh_history").read_bytes(), b"existing target\n")
-        self.assertFalse((self.state / "fzf_query_history").exists())
+    def test_nonempty_unmergeable_target_stops_all_copies(self):
+        self.config.mkdir(parents=True)
+        (self.config / "local.zsh").write_bytes(b"OMZ_JUMP=none\n")
+        self.apply("--copy-local", expected=1)
+        self.assertEqual((self.config / "local.zsh").read_bytes(), b"OMZ_JUMP=none\n")
+        self.assertFalse((self.state / "zsh_history").exists())
         self.assertFalse((self.state / "backups").exists())
+
+    def test_nonempty_histories_merge_legacy_first_and_keep_new_directory(self):
+        (self.legacy / "cache/fzfhistory").write_bytes(b"legacy query")  # No final newline.
+        self.state.mkdir(parents=True)
+        new_history = b": 1300:0;written by a new shell\n"
+        (self.state / "zsh_history").write_bytes(new_history)
+        (self.state / "fzf_query_history").write_bytes(b"new query\n")
+        (self.state / "last_directory").write_bytes(b"/newer/directory\n")
+        preview = self.run_migration()
+        self.assertIn("merge (legacy records first", preview.stdout)
+        self.assertIn("target kept (newer)", preview.stdout)
+        self.assertEqual((self.state / "zsh_history").read_bytes(), new_history)
+        self.apply()
+        self.assertEqual((self.state / "zsh_history").read_bytes(), self.history + new_history)
+        self.assertEqual((self.state / "fzf_query_history").read_bytes(),
+                         b"legacy query\nnew query\n")
+        self.assertEqual((self.state / "last_directory").read_bytes(), b"/newer/directory\n")
+        self.assertEqual((self.state / "zsh_history").stat().st_mode & 0o777, 0o600)
+        backup = next((self.state / "backups").iterdir())
+        manifest = json.loads((backup / "manifest.json").read_text())
+        entry = next(item for item in manifest["files"]
+                     if item["source"] == str(self.state / "zsh_history"))
+        self.assertEqual(entry["sha256"], hashlib.sha256(new_history).hexdigest())
+        with (self.state / "zsh_history").open("ab") as stream:
+            stream.write(b": 1301:0;after merge\n")
+        self.assertIn("already migrated", self.apply().stdout)
+        self.assertEqual((self.state / "zsh_history").read_bytes(),
+                         self.history + new_history + b": 1301:0;after merge\n")
+
+    def test_interrupted_merge_resumes_without_duplicate_records(self):
+        (self.state / "migrations").mkdir(parents=True)
+        target = self.state / "zsh_history"
+        source = self.legacy / "cache/zshhistory"
+        base = b": 1300:0;new shell\n"
+        merged = self.history + base
+        marker = self.state / "migrations/state-v1.json"
+        record = {"target": str(target),
+                  "source_sha256": hashlib.sha256(self.history).hexdigest(),
+                  "status": "merging", "base_sha256": hashlib.sha256(base).hexdigest(),
+                  "merged_sha256": hashlib.sha256(merged).hexdigest()}
+        for current in (merged, base):
+            with self.subTest(replaced=current == merged):
+                target.write_bytes(current)
+                marker.write_text(json.dumps({str(source): record}))
+                self.assertIn("resume merge", self.apply().stdout)
+                self.assertEqual(target.read_bytes(), merged)
+                self.assertEqual(json.loads(marker.read_text())[str(source)]["status"],
+                                 "complete")
+        target.write_bytes(base + b": 1301:0;unexpected\n")
+        marker.write_text(json.dumps({str(source): record}))
+        self.assertIn("merge manually", self.apply(expected=1).stderr)
+        self.assertEqual(target.read_bytes(), base + b": 1301:0;unexpected\n")
 
     def test_empty_target_is_backed_up_and_populated(self):
         self.state.mkdir(parents=True)

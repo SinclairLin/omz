@@ -1,11 +1,13 @@
 # 迁移验证记录
 
+本文件保留验证方法、结论及待验事项。`docs/baseline-*.json` 和 `docs/verification-*.json` 是本机生成的原始报告，包含机器路径及环境信息，已加入 `.gitignore`，不随仓库分发。下文报告文件名仅用于定位本地记录；新检出可按复测命令重新采集。
+
 ## M0：基线采集完成
 
 - 日期：2026-10-27，Asia/Shanghai。
 - 代码基线：`358bbd69e2ba81563401678f86df045b966d8e44`，分支 `main`。
 - 环境：macOS 27.0.1，Apple Silicon / arm64。
-- 原始记录：[baseline-m0.json](baseline-m0.json)。
+- 本地原始记录：`baseline-m0.json`。
 - 采集入口：`scripts/collect-baseline.py`，Python 3 标准库，无新增依赖。
 - 范围：记录现状、测量性能、验证备份；尚未修改 Shell 初始化、安装器或现有后端。
 
@@ -128,7 +130,7 @@ python3 scripts/collect-baseline.py \
 
 - 日期：2026-10-27，Asia/Shanghai；本机 macOS 27.0.1 / arm64、Zsh 5.9。
 - 工作位置：`main` 工作区，HEAD 仍为 M0 基线 `358bbd6`；本阶段改动尚未提交。
-- 原始记录：[desktop](verification-m1-desktop.json)、[minimal](verification-m1-minimal.json)。两次采集依次进行，每档独立使用临时源码、HOME、ZDOTDIR 与四个 XDG 根目录。
+- 本地原始记录：`verification-m1-desktop.json`、`verification-m1-minimal.json`。两次采集依次进行，每档独立使用临时源码、HOME、ZDOTDIR 与四个 XDG 根目录。
 - 真实数据只执行了默认迁移预览：正确定位 `~/.config/zsh/cache/zshhistory`、`fzfhistory` 和 `~/.zlua`，上次目录源文件缺失；没有执行真实 `--apply`，没有修改 `.zshrc` 或日常安装目录。
 
 实现：
@@ -189,7 +191,7 @@ python3 scripts/collect-baseline.py --profile minimal --output /tmp/omz-m1-minim
 
 - 日期：2026-10-27，Asia/Shanghai；本机 macOS 27.0.1 / arm64，Zsh 5.9、fzf 0.74.5。
 - 工作位置：`main`；HEAD 仍为 `358bbd6`，保留 M1 未提交工作，没有创建分支或提交。
-- 原始记录：[desktop](verification-m2-desktop.json)、[minimal](verification-m2-minimal.json)、[同环境交错对照](verification-m2-comparison.json)。
+- 本地原始记录：`verification-m2-desktop.json`、`verification-m2-minimal.json`、`verification-m2-comparison.json`（同环境交错对照）。
 - Antidote v2.3.0、fzf-tab v1.3.0、zsh-autosuggestions v0.7.1、zsh-syntax-highlighting 0.8.0；完整提交及许可证见 [第三方来源](third-party.zh-CN.md)，实际固定值位于 `config/bootstrap.zsh` 和 `config/plugins.txt`。
 
 ### M2 实现与实际安装
@@ -274,7 +276,7 @@ M2 完成边界为外置实现、本机依赖安装、功能及隔离 PTY 验证
 
 - 日期：2026-10-27，Asia/Shanghai；继续在 `main` 工作，保留原有 M1/M2 改动，没有创建分支或 Git 提交。
 - 本机版本：Zsh 5.9、Homebrew fzf 0.74.5、zoxide 0.10.0、Lua 5.5.1。
-- 原始记录：[功能检查](verification-m3.json)、[启动测量](verification-m3-performance.json)。
+- 本地原始记录：`verification-m3.json`（功能检查）、`verification-m3-performance.json`（启动测量）。
 - 用户本轮调整性能要求：“忽略性能，只要不是太离谱就没事”。下方原始数据及旧预算对照继续保留，细微差异不阻塞 M3，未宣称每一档均满足此前的 20 ms 预算。
 
 ### M3 实现
@@ -395,7 +397,7 @@ desktop 的 Git 提示符中位数/P95：普通目录 16.049/16.783 ms、10,000 
 
 ## M5：安装与文档收尾（2026-10-28）
 
-在 `main` 延续已有 M1–M4 工作区完成本阶段，没有新分支、提交或推送。原始机器记录为 [verification-m5.json](verification-m5.json)。本阶段交付范围是仓库安装器、文档和本机隔离验收；日常安装、真实数据与跨平台实机体验仍分开标记。
+在 `main` 延续已有 M1–M4 工作区完成本阶段，没有新分支、提交或推送。本地原始机器记录为 `verification-m5.json`。本阶段交付范围是仓库安装器、文档和本机隔离验收；日常安装、真实数据与跨平台实机体验仍分开标记。
 
 ### 安装与诊断
 

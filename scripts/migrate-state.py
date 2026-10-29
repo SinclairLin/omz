@@ -32,6 +32,45 @@ def write_json(path, value):
         temporary.unlink(missing_ok=True)
 
 
+# Line-oriented histories: legacy records first, then those the new shell already wrote.
+MERGEABLE = ("zshhistory", "fzfhistory")
+
+
+def merge_into(source, target, saved_source, saved_target, completed, marker):
+    identity = {"target": str(target), "source_sha256": digest(saved_source)}
+    record = completed.get(str(source), {})
+    if target.is_symlink():
+        raise RuntimeError("Target changed after preview: " + str(target))
+    current = digest(target)
+    if not (record.get("status") == "merging" and current == record.get("merged_sha256")):
+        if current != digest(saved_target):
+            raise RuntimeError("Target changed after backup: " + str(target))
+        if digest(source) != identity["source_sha256"]:
+            raise RuntimeError("Source changed after backup: " + str(source))
+        legacy = saved_source.read_bytes()
+        if legacy and not legacy.endswith(b"\n"):
+            legacy += b"\n"
+        merged = legacy + saved_target.read_bytes()
+        expected = hashlib.sha256(merged).hexdigest()
+        completed[str(source)] = dict(identity, status="merging", base_sha256=current,
+                                      merged_sha256=expected)
+        write_json(marker, completed)
+        with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(merged)
+        try:
+            if digest(temporary) != expected:
+                raise RuntimeError("Merge verification failed: " + str(target))
+            if digest(target) != current:
+                raise RuntimeError("Target changed during merge: " + str(target))
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
+    completed[str(source)] = dict(identity, status="complete")
+    write_json(marker, completed)
+    print("Merged and verified: " + str(target))
+
+
 def main():
     home = Path.home()
     repository = Path(__file__).resolve().parent.parent
@@ -86,13 +125,30 @@ def main():
                 "target": str(target), "source_sha256": digest(source), "status": "copying"}
                 and digest(target) == digest(source)):
             status = "resume verified copy"
-            pending.append((source, target))
+            pending.append((source, target, "copy"))
+        elif (source.name in MERGEABLE and target.is_file()
+                and completed.get(key, {}).get("status") == "merging"
+                and completed[key].get("target") == str(target)
+                and completed[key].get("source_sha256") == digest(source)
+                and digest(target) in (completed[key].get("base_sha256"),
+                                       completed[key].get("merged_sha256"))):
+            status = "resume merge"
+            pending.append((source, target, "merge"))
+        elif target.exists() and target.stat().st_size and key not in completed:
+            if source.name in MERGEABLE:
+                status = "merge (legacy records first, new records kept)"
+                pending.append((source, target, "merge"))
+            elif source.name == "currentdir":
+                status = "target kept (newer)"
+            else:
+                conflicts.append(str(target) + " is nonempty; merge manually, then re-run")
+                status = "conflict"
         elif target.exists() and target.stat().st_size:
             conflicts.append(str(target) + " is nonempty; merge manually, then re-run")
             status = "conflict"
         else:
             status = "copy"
-            pending.append((source, target))
+            pending.append((source, target, "copy"))
         print("{} -> {} [{}]".format(source, target, status))
     jump = args.zlua_data.expanduser().absolute()
     print("Jump database (backup only): {} [{}]".format(
@@ -100,10 +156,12 @@ def main():
     print("Legacy personal configuration is never executed by the migration tool.")
     if conflicts:
         raise RuntimeError("\n".join(conflicts))
+    if any(mode == "merge" for _, _, mode in pending):
+        print("Merging rewrites the new history; close every shell, including new ones, first.")
     if not args.apply:
         print("Preview only. Use --apply; history also requires --old-sessions-closed.")
         return
-    if any(source.name == "zshhistory" for source, _ in pending):
+    if any(source.name == "zshhistory" for source, _, _ in pending):
         if not args.old_sessions_closed:
             raise RuntimeError("Close old shells to flush history, then pass --old-sessions-closed.")
     if not pending:
@@ -148,9 +206,12 @@ def main():
             "scope": "M1 state copies only; z.lua database is backed up, not imported.",
         })
         print("Verified backup: " + str(backup))
-        for source, target in pending:
+        for source, target, mode in pending:
             private_directory(target.parent)
             saved = snapshots[source]
+            if mode == "merge":
+                merge_into(source, target, saved, snapshots[target], completed, marker)
+                continue
             resumable = completed.get(str(source)) == {
                 "target": str(target), "source_sha256": digest(saved), "status": "copying"}
             if target.is_symlink() or (target.exists() and target.stat().st_size and not (

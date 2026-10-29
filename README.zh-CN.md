@@ -20,7 +20,7 @@ macOS 先准备 [Homebrew](https://brew.sh/) 与 Apple 命令行工具；安装�
 
 只有显式选择 z.lua，或 `OMZ_JUMP=auto` 遇到尚未决定如何迁移的旧数据库时，才请求 Lua。可选包不可用时逐项警告并保留运行时降级；fzf 0.51.0+ 启用增强历史与补全，旧版保留原生行为。不自动编译 Rust、下载上游二进制、建立全局 fd 软链接，也不更新 `~/.fzf`。已有二进制仍可通过 PATH 使用。Python 3 仅用于显式迁移与开发检查，日常启动不需要。
 
-需要永久选择配置档或后端时，安装前在 `${XDG_CONFIG_HOME:-$HOME/.config}/omz/local.zsh` 中设置，例如添加 `OMZ_PROFILE=minimal` 或 `OMZ_JUMP=zlua`；保留文件已有内容。它优先于旧 `config/env-self.zsh`。环境变量形式的 `OMZ_PROFILE=minimal` 只影响本次执行，安装器不会将其保存为永久配置。
+需要永久选择配置档或后端时，安装前在 `${XDG_CONFIG_HOME:-$HOME/.config}/omz/local.zsh` 中设置，例如添加 `OMZ_PROFILE=minimal` 或 `OMZ_JUMP=zlua`；保留文件已有内容。它优先于旧 `config/env-self.zsh`。该文件在历史、快捷键和别名之前读取，覆盖这些设置（`HISTSIZE`、`alias`、`bindkey`、`setopt`）应写在同目录的 `omz/post.zsh`，它在项目设置之后、widget 插件之前执行。环境变量形式的 `OMZ_PROFILE=minimal` 只影响本次执行，安装器不会将其保存为永久配置。
 
 ### 手动准备软件包
 

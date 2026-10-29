@@ -30,6 +30,7 @@ if [[ -d /opt/homebrew/bin ]]; then
 fi
 
 export OMZ="$ROOT_DIR"
+source "$ROOT_DIR/lib/paths.zsh"
 OSTYPE=darwin24.0
 source "$ROOT_DIR/config/fzf.zsh"
 zstyle -s ':fzf-tab:complete:kill:argument-rest' fzf-preview process_preview

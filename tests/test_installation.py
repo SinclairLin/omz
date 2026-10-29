@@ -215,7 +215,9 @@ class InstallationTests(unittest.TestCase):
         state = Path(self.env["XDG_STATE_HOME"]) / "omz"
         state.mkdir(parents=True)
         history = state / "zsh_history"
-        history.write_text(": 100:0;preserve history\n")
+        # A nonempty history merges; a symlinked target is still a conflict.
+        (state / "elsewhere").write_text(": 100:0;preserve history\n")
+        history.symlink_to(state / "elsewhere")
         legacy = Path(self.env["HOME"]) / ".config/zsh/cache"
         legacy.mkdir(parents=True)
         (legacy / "zshhistory").write_text(": 200:0;legacy history\n")

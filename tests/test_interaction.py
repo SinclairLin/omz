@@ -225,9 +225,11 @@ fi
                    "path=(" + shlex.quote(str(binaries)) + " $path)\n")
         terminal = self.terminal()
         self.assertTrue((self.home / "used-official-fallback").exists())
-        terminal.send(b"bindkey '^I'; bindkey '^R'\r")
+        terminal.send(b"bindkey '^I'; bindkey '^R'; "
+                      b"(( $+functions[fzf-completion] )) || print M3_NO_COMPLETION_LAYER\r")
         terminal.expect(b'"^I" expand-or-complete')
         terminal.expect(b'"^R" fzf-history-widget')
+        terminal.expect(b"\r\nM3_NO_COMPLETION_LAYER\r\n")
         terminal.expect(b"M3_READY> ")
         terminal.send(b'before=$(bindkey -L); source "$OMZ_PTY_ROOT/omz.zsh"; '
                       b'[[ $before == "$(bindkey -L)" ]] && print M3_REPEAT_KEYS_OK\r')

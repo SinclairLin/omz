@@ -140,6 +140,34 @@ antidote() { print -u2 -- 'startup invoked antidote'; return 97 }
         self.manage("verify")
         self.assertEqual(self.startup().stderr, "")
 
+    def test_unresolved_zlua_exec_warns_without_aborting_tools(self):
+        self.local("ZLUA_EXEC=omz-no-such-lua\n")
+        self.assertIn("ZLUA_EXEC=omz-no-such-lua not found", self.manage("build").stderr)
+        self.manage("verify")
+
+    @unittest.skipUnless(modern_fzf_available(), "fzf >= 0.51.0 required")
+    def test_fzf_change_after_build_needs_no_rebuild(self):
+        old = self.directory / "old fzf"
+        old.mkdir()
+        (old / "fzf").write_text('#!/bin/sh\n[ "$1" = --version ] && echo 0.30.0\n')
+        (old / "fzf").chmod(0o700)
+        self.local('[[ -z ${OMZ_TEST_OLD_FZF:-} ]] || path=("$OMZ_TEST_OLD_FZF" $path)\n'
+                   "OMZ_JUMP=none\n")
+        check = """
+if _omz_fzf_available; then
+  (( $+functions[fzf-tab-complete] )) || exit 1
+else
+  (( ! $+functions[fzf-tab-complete] )) || exit 2
+fi
+(( $+functions[_zsh_highlight] && $+functions[_zsh_autosuggest_start] )) || exit 3
+"""
+        for build_old, start_old in ((True, False), (False, True)):
+            with self.subTest(build_old=build_old):
+                self.env["OMZ_TEST_OLD_FZF"] = str(old) if build_old else ""
+                self.manage("build")
+                self.env["OMZ_TEST_OLD_FZF"] = str(old) if start_old else ""
+                self.assertNotIn("stale", self.startup(check).stderr)
+
     def test_missing_cache_degrades_once_without_installing(self):
         log = self.prohibit_network_commands()
         result = self.startup("""

@@ -2,13 +2,7 @@
 # Read the same trusted configuration as startup; the Python worker never evaluates data.
 emulate -LR zsh
 export OMZ=${0:A:h:h}
-source "$OMZ/lib/paths.zsh"
-source "$OMZ/config/env.zsh"
-if [[ -f "$OMZ_CONFIG_DIR/local.zsh" ]]; then
-  source "$OMZ_CONFIG_DIR/local.zsh"
-elif [[ -f "$OMZ/config/env-self.zsh" ]]; then
-  source "$OMZ/config/env-self.zsh"
-fi
+source "$OMZ/lib/config.zsh"
 (( $+commands[python3] )) || {
   print -u2 -- "omz jump migration requires Python 3."
   exit 127

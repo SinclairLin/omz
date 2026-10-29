@@ -29,11 +29,14 @@ _apply_precmd_title_hook() {
 
 # auto to last pwd
 _apply_chpwd_hook() {
+    # Truncation keeps the existing mode, so only a missing file costs a fork.
     chpwd_hook() {
-        (umask 077; print -r -- "$PWD" >| "$OMZ_STATE_DIR/last_directory")
-        chmod 600 "$OMZ_STATE_DIR/last_directory"
+        [[ -f "$OMZ_STATE_DIR/last_directory" ]] ||
+            _omz_private_file "$OMZ_STATE_DIR/last_directory"
+        { print -r -- "$PWD" >| "$OMZ_STATE_DIR/last_directory" } 2>/dev/null
     }
     add-zsh-hook -Uz chpwd chpwd_hook
+    _omz_private_file "$OMZ_STATE_DIR/last_directory"
     local currentdir
     if [[ -r "$OMZ_STATE_DIR/last_directory" ]]; then
         currentdir=$(<"$OMZ_STATE_DIR/last_directory")

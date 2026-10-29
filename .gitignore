@@ -1,7 +1,29 @@
-cache/*
-config/env-self.zsh
+# Local shell configuration and runtime state
+/cache/
+/config/env-self.zsh
+/.zcompdump*
+*.zwc
+
+# Machine-specific reports generated during verification
+/docs/baseline-*.json
+/docs/verification-*.json
+
+# Python environments and generated caches
 __pycache__/
 *.py[cod]
+/.venv/
+/venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+/htmlcov/
+
+# Editor temporary files
+*.swp
+*.swo
+*~
 
 # System files
 .DS_Store

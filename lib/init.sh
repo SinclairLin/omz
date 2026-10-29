@@ -15,7 +15,7 @@ function d () {
     dirs -v | head -10
   fi
 }
-compdef _dirs d
+(( ! $+functions[compdef] )) || compdef _dirs d
 ls --color=tty . &>/dev/null && alias ls='ls --color=tty' || alias ls='ls -G'
 
 grep-flag-available() {

@@ -95,6 +95,45 @@ source "$OMZ_TEST_ROOT/omz.zsh"
 bindkey '^R'
 """), '"^R" history-incremental-search-backward\n')
 
+    def test_post_configuration_overrides_project_settings(self):
+        self.local("OMZ_PROFILE=minimal\nHISTSIZE=7\nalias ll='print local'\n")
+        (self.config / "post.zsh").write_text(
+            "(( ${+functions[compdef]} )) || return 9\n"
+            "HISTSIZE=200000\nalias ll='print post'\nbindkey '^H' backward-delete-char\n"
+            "setopt correct\n")
+        self.assertEqual(self.clean_shell("""
+[[ $HISTSIZE == 200000 && $aliases[ll] == 'print post' ]] || exit 1
+[[ -o correct ]] || exit 2
+bindkey '^H'
+"""), '"^H" backward-delete-char\n')
+
+    def test_reload_after_first_prompt_prints_hint(self):
+        self.env["OMZ_PROFILE"] = "minimal"
+        result = self.shell('source "$OMZ_TEST_ROOT/omz.zsh" || exit\n'
+                            '_omz_mark_prompt_shown\nsource "$OMZ_TEST_ROOT/omz.zsh"\n'
+                            '(( ! ${precmd_functions[(Ie)_omz_mark_prompt_shown]} )) || exit 1\n')
+        self.assertIn("already initialized; open a new shell", result.stderr)
+
+    def test_state_and_completion_failures_do_not_abort_startup(self):
+        self.env["OMZ_PROFILE"] = "minimal"
+        self.state.mkdir(parents=True)
+        (self.state / "zsh_history").symlink_to(self.directory / "missing dir/history")
+        cache_parent = Path(self.env["XDG_CACHE_HOME"])
+        cache_parent.write_text("not a directory\n")
+        # Not self.shell(): the plugin build cannot run with this cache path.
+        result = subprocess.run(["zsh", "-dfi", "-c", """
+autoload -Uz compinit
+compinit() { return 1 }
+source "$OMZ_TEST_ROOT/omz.zsh" || exit 1
+(( $+functions[d] && $+aliases[grep] )) || exit 2
+[[ $HISTFILE == "$OMZ_STATE_DIR/zsh_history" && -o share_history ]] || exit 3
+(( $+functions[git_prompt_info] )) || exit 4
+"""], env=self.env, cwd=self.home, capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("cannot prepare private directory", result.stderr)
+        self.assertIn("cannot make history file private", result.stderr)
+        self.assertIn("compinit failed", result.stderr)
+
     def test_legacy_configuration_fallback_and_new_file_priority(self):
         # Use a per-test checkout so a private legacy fixture cannot leak to other tests.
         legacy_root = self.directory / "legacy checkout"

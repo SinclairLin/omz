@@ -23,8 +23,8 @@ case ${HIST_STAMPS-} in
 esac
 
 HISTFILE="$OMZ_STATE_DIR/zsh_history"
-(umask 077; touch -- "$HISTFILE") || return
-chmod 600 "$HISTFILE" || return
+_omz_private_file "$HISTFILE" ||
+  print -u2 -- "omz: cannot make history file private: $HISTFILE"
 HISTSIZE=50000
 SAVEHIST=10000
 

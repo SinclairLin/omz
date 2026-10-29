@@ -148,7 +148,7 @@ OMZ_RESTORE_DIRECTORY=false
 
 终端标题继续兼容 `_OMZ_APPLY_PREEXEC_HOOK`、`_OMZ_APPLY_PRECMD_TITLE_HOOK` 的原有意义，不为它们重复增加新开关。迁移期将 `_OMZ_APPLY_CHPWD_HOOK` 映射到 `OMZ_RESTORE_DIRECTORY`，将 `_OMZ_APPLY_HISTORYBYFZF=false` 映射到原生历史搜索；显式的新选项优先。无对应历史值时，恢复上次目录默认关闭。
 
-当前 `config/env-self.zsh` 在新个人配置缺失时继续读取，且移到初始化前；新文件存在时只读取新文件，避免执行两次。迁移器提供复制选项，默认保留旧文件。
+当前 `config/env-self.zsh` 在新个人配置缺失时继续读取，且移到初始化前；新文件存在时只读取新文件，避免执行两次。迁移器提供复制选项，默认保留旧文件。覆盖别名、快捷键、历史大小的设置写入 `${XDG_CONFIG_HOME:-$HOME/.config}/omz/post.zsh`，在项目设置之后读取。
 
 ### 5.2 加载顺序
 
@@ -157,7 +157,7 @@ OMZ_RESTORE_DIRECTORY=false
 3. 交互 Shell 加载历史、基础快捷键、自有函数，设置补全目录及 `zstyle`。
 4. 初始化 compinit，将缓存放到用户缓存目录；若外部环境已完成初始化则复用，不能重复初始化。
 5. 初始化 fzf 官方集成及所选跳转后端。
-6. 加载项目别名、终端标题钩子和 simple 主题。
+6. 加载项目别名、终端标题钩子和 simple 主题，再读取可选的 `post.zsh` 个人后置覆盖。
 7. 加载 Antidote 生成的静态文件，顺序为 fzf-tab、自动建议、语法高亮。
 
 后续步骤不得再次覆盖 Tab 或 `Ctrl-R`；所有包装 widgets 的插件均在项目按键配置完成后加载。官方 fzf 集成不能替代 fzf-tab 的补全展示职责。
